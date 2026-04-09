@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "BhaktiVerse",
+    "slug": "bhaktiverse",
+    "scheme": "bhaktiverse",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FFF5E4"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bhaktiverse.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "BhaktiVerse uses the microphone so you can record and save your own private shloka recitations.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.bhaktiverse.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-web-browser",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5779feca-485e-4148-80cb-47f94b7daf8a"
+      }
+    },
+    "owner": "mukka.nikhi"
+  }
+}
