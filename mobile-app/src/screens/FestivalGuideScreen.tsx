@@ -19,7 +19,7 @@ const festivalVisuals: Record<string, { symbol: string; colors: [string, string]
 };
 
 export function FestivalGuideScreen({ navigation, route }: { navigation: any; route: any }) {
-  const { appLanguage, prayerSourceLanguage, hasPremiumAccess } = useApp();
+  const { user, appLanguage, prayerSourceLanguage, hasPremiumAccess, logout } = useApp();
   const tr = (path: string) => t(appLanguage, path);
   const festivalKey = String(route?.params?.festivalKey || "");
   const [guide, setGuide] = useState<FestivalGuideData | null>(null);
@@ -155,8 +155,20 @@ export function FestivalGuideScreen({ navigation, route }: { navigation: any; ro
                   tr("festivalGuide.lockedPoint1"),
                   tr("festivalGuide.lockedPoint2"),
                 ]}
-                ctaLabel={tr("common.unlockPremium")}
-                onPress={() => navigation.navigate("Premium")}
+                ctaLabel={user?.isGuest ? tr("common.signInToContinue") : tr("common.unlockPremium")}
+                onPress={() => {
+                  if (user?.isGuest) {
+                    void logout();
+                    return;
+                  }
+
+                  navigation.navigate("Premium", {
+                    postPurchaseRedirect: {
+                      name: "FestivalGuide",
+                      params: { festivalKey },
+                    },
+                  });
+                }}
               />
             ) : (
               <>

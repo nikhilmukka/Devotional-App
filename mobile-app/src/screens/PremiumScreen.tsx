@@ -16,6 +16,14 @@ import {
 } from "../lib/billing/revenuecat";
 import type { RevenueCatPackageSummary } from "../lib/billing/types";
 
+type PostPurchaseRedirectTarget =
+  | string
+  | {
+      name: string;
+      params?: Record<string, unknown>;
+    }
+  | null;
+
 function getPlanLabel(plan: string, tr: (path: string) => string) {
   switch (plan) {
     case "premium_individual":
@@ -40,23 +48,29 @@ function getStatusLabel(status: string, tr: (path: string) => string) {
   }
 }
 
-export function PremiumScreen() {
+export function PremiumScreen({ navigation, route }: { navigation: any; route?: any }) {
   const {
     appLanguage,
+    user,
     subscriptionTier,
     entitlementStatus,
     entitlementValidUntil,
     hasPremiumAccess,
     hasFamilyAccess,
+    refreshPremiumEntitlement,
+    logout,
   } = useApp();
   const [showNotice, setShowNotice] = useState(false);
   const [noticeTitle, setNoticeTitle] = useState("");
   const [noticeMessage, setNoticeMessage] = useState("");
+  const [noticeRedirectTarget, setNoticeRedirectTarget] = useState<PostPurchaseRedirectTarget>(null);
   const [availablePackages, setAvailablePackages] = useState<RevenueCatPackageSummary[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
   const tr = (path: string) => t(appLanguage, path);
   const billingSummary = getBillingSetupSummary();
+  const billingIsReady = billingSummary.status === "ready_for_integration";
+  const postPurchaseRedirect = route?.params?.postPurchaseRedirect ?? null;
 
   const premiumFeatures = useMemo(
     () => [
@@ -98,18 +112,37 @@ export function PremiumScreen() {
     };
   }, [billingSummary.status]);
 
-  function openNotice(title: string, message: string) {
+  function openNotice(title: string, message: string, redirectTarget?: PostPurchaseRedirectTarget) {
     setNoticeTitle(title);
     setNoticeMessage(message);
+    setNoticeRedirectTarget(redirectTarget ?? null);
     setShowNotice(true);
   }
 
   async function handlePurchase(packageIdentifier: string) {
+    if (user?.isGuest) {
+      openNotice(tr("premium.signInRequiredTitle"), tr("premium.signInRequiredBody"), "Login");
+      return;
+    }
+
     setBillingBusy(true);
     try {
       const result = await purchaseRevenueCatPackage(packageIdentifier);
       if (result.ok) {
-        openNotice(tr("premium.purchaseSuccessTitle"), tr("premium.purchaseSuccessBody"));
+        let unlocked = await refreshPremiumEntitlement(result.customerInfo ?? null);
+        if (!unlocked) {
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          unlocked = await refreshPremiumEntitlement();
+        }
+        if (unlocked) {
+          openNotice(
+            tr("premium.purchaseSuccessTitle"),
+            tr("premium.purchaseSuccessBody"),
+            postPurchaseRedirect
+          );
+        } else {
+          openNotice(tr("premium.purchaseErrorTitle"), tr("premium.purchasePendingBody"));
+        }
         return;
       }
 
@@ -125,15 +158,51 @@ export function PremiumScreen() {
   }
 
   async function handleRestore() {
+    if (user?.isGuest) {
+      openNotice(tr("premium.signInRequiredTitle"), tr("premium.signInRequiredBody"), "Login");
+      return;
+    }
+
     setBillingBusy(true);
     try {
       const result = await restoreRevenueCatPurchasesWithResult();
       if (result.ok) {
-        openNotice(tr("premium.restoreSuccessTitle"), tr("premium.restoreSuccessBody"));
+        let unlocked = await refreshPremiumEntitlement(result.customerInfo ?? null);
+        if (!unlocked) {
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          unlocked = await refreshPremiumEntitlement();
+        }
+        if (unlocked) {
+          openNotice(
+            tr("premium.restoreSuccessTitle"),
+            tr("premium.restoreSuccessBody"),
+            postPurchaseRedirect
+          );
+        } else {
+          openNotice(tr("premium.restoreErrorTitle"), tr("premium.restorePendingBody"));
+        }
         return;
       }
 
       openNotice(tr("premium.restoreErrorTitle"), result.message);
+    } finally {
+      setBillingBusy(false);
+    }
+  }
+
+  async function handleRefreshStatus() {
+    if (user?.isGuest) {
+      openNotice(tr("premium.signInRequiredTitle"), tr("premium.signInRequiredBody"), "Login");
+      return;
+    }
+
+    setBillingBusy(true);
+    try {
+      const unlocked = await refreshPremiumEntitlement();
+      openNotice(
+        unlocked ? tr("premium.purchaseSuccessTitle") : tr("premium.restoreErrorTitle"),
+        unlocked ? tr("premium.purchaseSuccessBody") : tr("premium.restorePendingBody")
+      );
     } finally {
       setBillingBusy(false);
     }
@@ -165,7 +234,9 @@ export function PremiumScreen() {
             </Text>
           </View>
           <Text style={styles.planBody}>
-            {hasFamilyAccess
+            {user?.isGuest
+              ? tr("premium.signInRequiredBody")
+              : hasFamilyAccess
               ? tr("premium.familyBody")
               : hasPremiumAccess
                 ? tr("premium.premiumBody")
@@ -176,6 +247,22 @@ export function PremiumScreen() {
               {tr("premium.validUntil")}: {new Date(entitlementValidUntil).toLocaleDateString()}
             </Text>
           ) : null}
+          <View style={styles.metaActionsRow}>
+            <Pressable
+              style={[styles.secondaryMetaButton, billingBusy && styles.secondaryMetaButtonDisabled]}
+              onPress={() => void handleRefreshStatus()}
+              disabled={billingBusy}
+            >
+              <Ionicons name="refresh-outline" size={16} color={AppColors.maroon} />
+              <Text style={styles.secondaryMetaButtonText}>
+                {user?.isGuest
+                  ? tr("common.signInToContinue")
+                  : billingIsReady
+                    ? tr("premium.refreshCta")
+                    : tr("premium.checkAccessCta")}
+              </Text>
+            </Pressable>
+          </View>
         </SectionCard>
 
         <SectionCard>
@@ -208,24 +295,26 @@ export function PremiumScreen() {
 
         <SectionCard>
           <Text style={styles.sectionTitle}>
-            {billingSummary.status === "ready_for_integration"
+            {billingIsReady
               ? tr("premium.availablePlans")
-              : tr("premium.comingSoon")}
+              : tr("premium.plansTitle")}
           </Text>
           <Text style={styles.billingBody}>
-            {billingSummary.status === "ready_for_integration"
+            {user?.isGuest
+              ? tr("premium.signInRequiredBody")
+              : billingIsReady
               ? tr("premium.billingReadyBody")
-              : tr("premium.billingNote")}
+              : tr("premium.billingPreparingBody")}
           </Text>
           <View style={styles.billingSetupCard}>
-            <Text style={styles.billingSetupTitle}>Billing Setup</Text>
             <Text style={styles.billingSetupBody}>
-              Provider: RevenueCat · Status:{" "}
-              {billingSummary.status === "ready_for_integration"
-                ? tr("premium.billingReady")
-                : tr("premium.billingPending")}
+              {user?.isGuest
+                ? tr("common.signInToContinue")
+                : billingIsReady
+                ? tr("premium.choosePlanHint")
+                : tr("premium.plansPendingBody")}
             </Text>
-            {billingSummary.status === "ready_for_integration" ? (
+            {user?.isGuest ? null : billingIsReady ? (
               packagesLoading ? (
                 <Text style={styles.billingSetupItem}>{tr("premium.loadingPlans")}</Text>
               ) : availablePackages.length > 0 ? (
@@ -253,31 +342,37 @@ export function PremiumScreen() {
                   </View>
                 ))
               ) : (
-                <Text style={styles.billingSetupItem}>{tr("premium.noPlansAvailable")}</Text>
+                <Text style={styles.billingSetupItem}>{tr("premium.plansUnavailable")}</Text>
               )
-            ) : (
-              billingSummary.products.map((product) => (
-                <Text key={product.id} style={styles.billingSetupItem}>
-                  • {product.label}
-                </Text>
-              ))
-            )}
+            ) : null}
           </View>
           <View style={styles.ctaRow}>
             <Pressable
               style={[styles.ctaButton, hasPremiumAccess && styles.ctaButtonActive]}
-              onPress={() =>
-                billingSummary.status === "ready_for_integration"
-                  ? void handleRestore()
-                  : openNotice(tr("premium.comingSoon"), tr("premium.billingNote"))
-              }
+              onPress={() => {
+                if (user?.isGuest) {
+                  openNotice(tr("premium.signInRequiredTitle"), tr("premium.signInRequiredBody"), "Login");
+                  return;
+                }
+
+                if (billingIsReady) {
+                  void handleRestore();
+                  return;
+                }
+
+                openNotice(tr("premium.comingSoon"), tr("premium.billingNote"));
+              }}
               disabled={billingBusy}
             >
               <Text style={styles.ctaButtonText}>
-                {billingBusy ? tr("premium.processing") : tr("premium.restoreCta")}
+                {billingBusy
+                  ? tr("premium.processing")
+                  : user?.isGuest
+                    ? tr("common.signInToContinue")
+                    : tr("premium.restoreCta")}
               </Text>
             </Pressable>
-            {billingSummary.status !== "ready_for_integration" ? (
+            {user?.isGuest ? null : !billingIsReady ? (
               <Pressable
                 style={[styles.secondaryButton, hasPremiumAccess && styles.secondaryButtonActive]}
                 onPress={() => openNotice(tr("premium.comingSoon"), tr("premium.billingNote"))}
@@ -296,7 +391,22 @@ export function PremiumScreen() {
         title={noticeTitle || (hasPremiumAccess ? tr("premium.activeCta") : tr("premium.comingSoon"))}
         message={noticeMessage || tr("premium.billingNote")}
         buttonLabel={tr("common.close")}
-        onClose={() => setShowNotice(false)}
+        onClose={() => {
+          setShowNotice(false);
+          const redirectTarget = noticeRedirectTarget;
+          setNoticeRedirectTarget(null);
+          if (redirectTarget === "Login") {
+            void logout();
+            return;
+          }
+          if (redirectTarget) {
+            if (typeof redirectTarget === "string") {
+              navigation.replace(redirectTarget);
+            } else {
+              navigation.replace(redirectTarget.name, redirectTarget.params);
+            }
+          }
+        }}
       />
     </ScreenContainer>
   );
@@ -368,6 +478,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  metaActionsRow: {
+    marginTop: 14,
+    flexDirection: "row",
+  },
+  secondaryMetaButton: {
+    minHeight: 40,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: AppColors.border,
+    backgroundColor: "#FFF8EE",
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  secondaryMetaButtonDisabled: {
+    opacity: 0.6,
+  },
+  secondaryMetaButtonText: {
+    color: AppColors.textPrimary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
   compareCard: {
     marginTop: 14,
     borderRadius: 20,
@@ -430,11 +563,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF8EE",
     padding: 14,
     gap: 6,
-  },
-  billingSetupTitle: {
-    color: AppColors.textPrimary,
-    fontSize: 14,
-    fontWeight: "700",
   },
   billingSetupBody: {
     color: AppColors.textSecondary,

@@ -7,7 +7,11 @@ import type {
 import Purchases from "react-native-purchases";
 import type { EntitlementStatus, SubscriptionTier } from "../supabase/types";
 import { billingProducts } from "./config";
-import type { BillingPurchaseResult, RevenueCatPackageSummary } from "./types";
+import type {
+  BillingPurchaseResult,
+  RevenueCatPackageSummary,
+  RevenueCatResolvedProduct,
+} from "./types";
 import { getBillingSetupSummary, getRevenueCatPublicSdkKey } from "./config";
 
 const PREMIUM_INDIVIDUAL_ENTITLEMENT = "premium_individual";
@@ -19,6 +23,7 @@ export type RevenueCatEntitlementState = {
   entitlementValidUntil: string | null;
   entitlementIsLifetime: boolean;
   hasMappedEntitlement: boolean;
+  primaryProductCode: string | null;
 };
 
 type RevenueCatBootstrapResult = {
@@ -27,6 +32,126 @@ type RevenueCatBootstrapResult = {
 };
 
 let isConfigured = false;
+
+function normalizeValue(value: string | null | undefined) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function resolveConfiguredBillingProduct(
+  rcPackage: PurchasesPackage
+): (typeof billingProducts)[number] | null {
+  const productIdentifier = normalizeValue(rcPackage.product.identifier);
+  const packageIdentifier = normalizeValue(rcPackage.identifier);
+  const packageType = normalizeValue(String(rcPackage.packageType));
+
+  const directMatch = billingProducts.find(
+    (product) => normalizeValue(product.id) === productIdentifier
+  );
+  if (directMatch) {
+    return directMatch;
+  }
+
+  if (packageIdentifier.includes("family")) {
+    return (
+      billingProducts.find(
+        (product) => normalizeValue(product.id) === "bhaktiverse_premium_family_yearly"
+      ) || null
+    );
+  }
+
+  if (
+    packageType.includes("monthly") ||
+    packageIdentifier.includes("monthly") ||
+    packageIdentifier.includes("$rc_monthly")
+  ) {
+    return (
+      billingProducts.find(
+        (product) => normalizeValue(product.id) === "bhaktiverse_premium_individual_monthly"
+      ) || null
+    );
+  }
+
+  if (
+    packageType.includes("annual") ||
+    packageType.includes("yearly") ||
+    packageIdentifier.includes("annual") ||
+    packageIdentifier.includes("yearly") ||
+    packageIdentifier.includes("$rc_annual")
+  ) {
+    return (
+      billingProducts.find(
+        (product) => normalizeValue(product.id) === "bhaktiverse_premium_individual_yearly"
+      ) || null
+    );
+  }
+
+  return null;
+}
+
+function resolveProductFromIdentifier(productIdentifier: string): RevenueCatResolvedProduct | null {
+  const normalized = normalizeValue(productIdentifier);
+
+  if (
+    normalized.includes("family") ||
+    normalized.includes("family_annual") ||
+    normalized.includes("premium_family")
+  ) {
+    return {
+      tier: "premium_family",
+      productCode: "bhaktiverse_premium_family_yearly",
+    };
+  }
+
+  if (
+    normalized.includes("monthly") ||
+    normalized === "month" ||
+    normalized === "monthly" ||
+    normalized.includes("annual") ||
+    normalized.includes("yearly") ||
+    normalized.includes("premium_individual")
+  ) {
+    return {
+      tier: "premium_individual",
+      productCode:
+        normalized.includes("monthly") || normalized === "month" || normalized === "monthly"
+          ? "bhaktiverse_premium_individual_monthly"
+          : "bhaktiverse_premium_individual_yearly",
+    };
+  }
+
+  return null;
+}
+
+function isFutureDate(value: string | null | undefined) {
+  if (!value) return false;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) && timestamp > Date.now();
+}
+
+function getFallbackProductFromCustomerInfo(
+  customerInfo: CustomerInfo
+): RevenueCatResolvedProduct | null {
+  const activeSubscriptionIdentifiers = customerInfo.activeSubscriptions ?? [];
+  const subscriptionsByIdentifier = customerInfo.subscriptionsByProductIdentifier ?? {};
+
+  const activeSubscriptionKeys = Object.entries(subscriptionsByIdentifier)
+    .filter(([, subscription]) => subscription?.isActive || isFutureDate(subscription?.expiresDate))
+    .map(([identifier]) => identifier);
+
+  const candidateIdentifiers = [
+    ...activeSubscriptionIdentifiers,
+    ...activeSubscriptionKeys,
+    ...(isFutureDate(customerInfo.latestExpirationDate)
+      ? customerInfo.allPurchasedProductIdentifiers ?? []
+      : []),
+  ];
+
+  return (
+    candidateIdentifiers
+      .map(resolveProductFromIdentifier)
+      .find((product): product is RevenueCatResolvedProduct => Boolean(product)) || null
+  );
+}
 
 function mapEntitlementToState(customerInfo: CustomerInfo): RevenueCatEntitlementState {
   const familyActive = customerInfo.entitlements.active[PREMIUM_FAMILY_ENTITLEMENT];
@@ -38,13 +163,29 @@ function mapEntitlementToState(customerInfo: CustomerInfo): RevenueCatEntitlemen
 
   const entitlement = familyActive || individualActive || familyKnown || individualKnown;
 
+  const fallbackProduct = getFallbackProductFromCustomerInfo(customerInfo);
+
   if (!entitlement) {
+    const fallbackTier = fallbackProduct?.tier ?? null;
+
+    if (fallbackTier) {
+      return {
+        subscriptionTier: fallbackTier,
+        entitlementStatus: "active",
+        entitlementValidUntil: customerInfo.latestExpirationDate,
+        entitlementIsLifetime: customerInfo.latestExpirationDate == null,
+        hasMappedEntitlement: true,
+        primaryProductCode: fallbackProduct?.productCode ?? null,
+      };
+    }
+
     return {
       subscriptionTier: "free",
       entitlementStatus: "inactive",
       entitlementValidUntil: null,
       entitlementIsLifetime: false,
       hasMappedEntitlement: false,
+      primaryProductCode: null,
     };
   }
 
@@ -72,6 +213,11 @@ function mapEntitlementToState(customerInfo: CustomerInfo): RevenueCatEntitlemen
     entitlementValidUntil: entitlement.expirationDate,
     entitlementIsLifetime: entitlement.expirationDate == null,
     hasMappedEntitlement: true,
+    primaryProductCode:
+      fallbackProduct?.productCode ??
+      (entitlement.identifier === PREMIUM_FAMILY_ENTITLEMENT
+        ? "bhaktiverse_premium_family_yearly"
+        : null),
   };
 }
 
@@ -174,9 +320,13 @@ export async function fetchRevenueCatOfferings() {
   }
 }
 
-function mapPackageToSummary(rcPackage: PurchasesPackage): RevenueCatPackageSummary {
+function mapPackageToSummary(rcPackage: PurchasesPackage): RevenueCatPackageSummary | null {
   const productIdentifier = rcPackage.product.identifier;
-  const configuredProduct = billingProducts.find((product) => product.id === productIdentifier);
+  const configuredProduct = resolveConfiguredBillingProduct(rcPackage);
+
+  if (!configuredProduct) {
+    return null;
+  }
 
   return {
     identifier: rcPackage.identifier,
@@ -185,7 +335,7 @@ function mapPackageToSummary(rcPackage: PurchasesPackage): RevenueCatPackageSumm
     packageType: String(rcPackage.packageType),
     productIdentifier,
     title: rcPackage.product.title,
-    displayTitle: configuredProduct?.label || rcPackage.product.title,
+    displayTitle: configuredProduct.label,
     description: rcPackage.product.description,
     priceString: rcPackage.product.priceString,
   };
@@ -198,7 +348,16 @@ function getOfferingPackages(offerings: PurchasesOfferings | null): PurchasesPac
 
 export async function fetchRevenueCatPackages(): Promise<RevenueCatPackageSummary[]> {
   const offerings = await fetchRevenueCatOfferings();
-  return getOfferingPackages(offerings).map(mapPackageToSummary);
+  const orderedIds = billingProducts.map((product) => product.id);
+
+  return getOfferingPackages(offerings)
+    .map(mapPackageToSummary)
+    .filter((item): item is RevenueCatPackageSummary => Boolean(item))
+    .sort(
+      (left, right) =>
+        orderedIds.indexOf(left.productIdentifier as (typeof orderedIds)[number]) -
+        orderedIds.indexOf(right.productIdentifier as (typeof orderedIds)[number])
+    );
 }
 
 export async function purchaseRevenueCatPackage(

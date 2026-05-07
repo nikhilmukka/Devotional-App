@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio } from "expo-av";
@@ -9,11 +9,11 @@ import { SectionCard } from "../components/SectionCard";
 import { fetchAudioLibrary, fetchAudioSchedule, type AudioLibraryItem, type AudioScheduleItem } from "../lib/supabase/content";
 import { audioSchedule } from "../data/sampleContent";
 import { useApp } from "../context/AppContext";
-import { getLocalizedWeekday, t } from "../i18n";
+import { getLanguageOptionLabel, getLocalizedAudioMeta, getLocalizedDeity, getLocalizedPrayerTitle, getLocalizedWeekday, t } from "../i18n";
 import { AppColors } from "../theme/colors";
 
 export function AudioScreen({ navigation }: { navigation: any }) {
-  const { appLanguage, prayerSourceLanguage, isSupabaseConnected, hasPremiumAccess } = useApp();
+  const { user, appLanguage, prayerSourceLanguage, isSupabaseConnected, hasPremiumAccess, logout } = useApp();
   const [liveSchedule, setLiveSchedule] = useState<AudioScheduleItem[]>([]);
   const [liveLibrary, setLiveLibrary] = useState<AudioLibraryItem[]>([]);
   const [audioBusy, setAudioBusy] = useState(false);
@@ -116,6 +116,7 @@ export function AudioScreen({ navigation }: { navigation: any }) {
   const hiddenLibraryCount =
     !hasPremiumAccess && isUsingLiveLibrary ? Math.max(library.length - visibleLibrary.length, 0) : 0;
   const showPremiumTeaser = !hasPremiumAccess;
+  const premiumEntryLabel = user?.isGuest ? tr("common.signInToContinue") : tr("audio.explorePremium");
   const todayWeekday = new Date().toLocaleDateString("en-US", { weekday: "long" });
   const today =
     schedule.find((track) => track.day === todayWeekday) ??
@@ -124,6 +125,30 @@ export function AudioScreen({ navigation }: { navigation: any }) {
   const progressRatio = previewRatio ?? (durationMillis > 0 ? positionMillis / durationMillis : 0);
   const displayedPositionMillis =
     previewRatio !== null && durationMillis > 0 ? Math.floor(durationMillis * previewRatio) : positionMillis;
+  const stopTodayPlayback = useCallback(async () => {
+    if (!soundRef.current) {
+      setIsPlaying(false);
+      setPositionMillis(0);
+      setDurationMillis(0);
+      setPreviewRatio(null);
+      previewRatioRef.current = null;
+      return;
+    }
+
+    try {
+      await soundRef.current.stopAsync().catch(() => undefined);
+      await soundRef.current.unloadAsync();
+    } catch (error) {
+      console.warn("Failed to stop audio prayer", error);
+    } finally {
+      soundRef.current = null;
+      setIsPlaying(false);
+      setPositionMillis(0);
+      setDurationMillis(0);
+      setPreviewRatio(null);
+      previewRatioRef.current = null;
+    }
+  }, []);
 
   const formatTime = (millis: number) => {
     const totalSeconds = Math.max(0, Math.floor(millis / 1000));
@@ -131,6 +156,10 @@ export function AudioScreen({ navigation }: { navigation: any }) {
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
+
+  useEffect(() => {
+    void stopTodayPlayback();
+  }, [stopTodayPlayback, today.prayerId, today.audioUrl]);
 
   const seekBy = async (offsetMillis: number) => {
     if (!soundRef.current || audioBusy) return;
@@ -229,9 +258,9 @@ export function AudioScreen({ navigation }: { navigation: any }) {
 
         <SectionCard>
           <Text style={styles.todayLabel}>{getLocalizedWeekday(appLanguage, today.day)} {tr("audio.audioPrayer")}</Text>
-          <Text style={styles.todayTitle}>{today.prayer}</Text>
+          <Text style={styles.todayTitle}>{getLocalizedPrayerTitle(appLanguage, today.prayer)}</Text>
           <Text style={styles.todayMeta}>
-            {today.deity} · {today.meta}
+            {getLocalizedDeity(appLanguage, today.deity)} · {getLocalizedAudioMeta(appLanguage, today.meta)}
           </Text>
           <View style={styles.playerRow}>
             <AudioSeekBar
@@ -286,10 +315,14 @@ export function AudioScreen({ navigation }: { navigation: any }) {
           </View>
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>
-              {today.hasPlayableAudio ? `Language: ${today.language}` : tr("audio.browserPreview")}
+              {today.hasPlayableAudio
+                ? `${tr("audio.languageLabel")}: ${getLanguageOptionLabel(today.language)}`
+                : tr("audio.browserPreview")}
             </Text>
             <Text style={styles.footerAction}>
-              {today.hasPlayableAudio ? (isPlaying ? "Pause Audio" : tr("audio.tapToListen")) : tr("audio.openPrayer")}
+              {today.hasPlayableAudio
+                ? (isPlaying ? tr("audio.pauseAudio") : tr("audio.tapToListen"))
+                : tr("audio.openPrayer")}
             </Text>
           </View>
         </SectionCard>
@@ -303,20 +336,33 @@ export function AudioScreen({ navigation }: { navigation: any }) {
           <Pressable
             key={track.day}
             style={styles.scheduleCard}
-            onPress={() =>
-              !hasPremiumAccess && track.isPremium
-                ? navigation.navigate("Premium")
-                : navigation.navigate("PrayerDetail", { prayerId: track.prayerId })
-            }
+            onPress={() => {
+              if (!hasPremiumAccess && track.isPremium) {
+                if (user?.isGuest) {
+                  void logout();
+                  return;
+                }
+
+                navigation.navigate("Premium", {
+                  postPurchaseRedirect: {
+                    name: "PrayerDetail",
+                    params: { prayerId: track.prayerId },
+                  },
+                });
+                return;
+              }
+
+              navigation.navigate("PrayerDetail", { prayerId: track.prayerId });
+            }}
           >
             <View style={styles.scheduleText}>
               <View style={styles.scheduleLabelRow}>
                 <Text style={styles.scheduleDay}>{getLocalizedWeekday(appLanguage, track.day)}</Text>
                 {track.isPremium ? <Text style={styles.premiumPill}>{tr("common.premium")}</Text> : null}
               </View>
-              <Text style={styles.scheduleTitle}>{track.prayer}</Text>
+              <Text style={styles.scheduleTitle}>{getLocalizedPrayerTitle(appLanguage, track.prayer)}</Text>
               <Text style={styles.scheduleMeta}>
-                {track.deity} · {track.meta}
+                {getLocalizedDeity(appLanguage, track.deity)} · {getLocalizedAudioMeta(appLanguage, track.meta)}
               </Text>
             </View>
             <View style={styles.scheduleIcon}>
@@ -336,20 +382,33 @@ export function AudioScreen({ navigation }: { navigation: any }) {
           <Pressable
             key={`${track.prayerId}-${track.language}`}
             style={styles.scheduleCard}
-            onPress={() =>
-              !hasPremiumAccess && track.isPremium
-                ? navigation.navigate("Premium")
-                : navigation.navigate("PrayerDetail", { prayerId: track.prayerId })
-            }
+            onPress={() => {
+              if (!hasPremiumAccess && track.isPremium) {
+                if (user?.isGuest) {
+                  void logout();
+                  return;
+                }
+
+                navigation.navigate("Premium", {
+                  postPurchaseRedirect: {
+                    name: "PrayerDetail",
+                    params: { prayerId: track.prayerId },
+                  },
+                });
+                return;
+              }
+
+              navigation.navigate("PrayerDetail", { prayerId: track.prayerId });
+            }}
           >
             <View style={styles.scheduleText}>
               <View style={styles.scheduleLabelRow}>
-                <Text style={styles.scheduleDay}>{track.language.toUpperCase()}</Text>
+                <Text style={styles.scheduleDay}>{getLanguageOptionLabel(track.language)}</Text>
                 {track.isPremium ? <Text style={styles.premiumPill}>{tr("common.premium")}</Text> : null}
               </View>
-              <Text style={styles.scheduleTitle}>{track.prayer}</Text>
+              <Text style={styles.scheduleTitle}>{getLocalizedPrayerTitle(appLanguage, track.prayer)}</Text>
               <Text style={styles.scheduleMeta}>
-                {track.deity} · {track.meta}
+                {getLocalizedDeity(appLanguage, track.deity)} · {getLocalizedAudioMeta(appLanguage, track.meta)}
               </Text>
             </View>
             <View style={styles.scheduleIcon}>
@@ -375,8 +434,23 @@ export function AudioScreen({ navigation }: { navigation: any }) {
                 ? `${tr("audio.lockedBody")} ${hiddenLibraryCount} ${tr("audio.tracks")}.`
                 : tr("audio.teaserBody")}
             </Text>
-            <Pressable style={styles.premiumButton} onPress={() => navigation.navigate("Premium")}>
-              <Text style={styles.premiumButtonText}>{tr("audio.explorePremium")}</Text>
+            <Pressable
+              style={styles.premiumButton}
+              onPress={() => {
+                if (user?.isGuest) {
+                  void logout();
+                  return;
+                }
+
+                navigation.navigate("Premium", {
+                  postPurchaseRedirect: {
+                    name: "MainTabs",
+                    params: { screen: "AudioTab" },
+                  },
+                });
+              }}
+            >
+              <Text style={styles.premiumButtonText}>{premiumEntryLabel}</Text>
             </Pressable>
           </SectionCard>
         ) : null}

@@ -20,6 +20,7 @@ import {
   getLocalizedDeity,
   getLocalizedFestival,
   getLocalizedPrayerTitle,
+  getLocalizedReadDuration,
   t,
 } from "../i18n";
 import { useApp } from "../context/AppContext";
@@ -308,7 +309,7 @@ export function SearchScreen({ navigation, route }: { navigation: any; route?: a
                       <Text style={styles.entityIconText}>🪔</Text>
                     </View>
                     <View style={styles.entityCopy}>
-                      <Text style={styles.entityTitle}>{festival.label}</Text>
+                      <Text style={styles.entityTitle}>{getLocalizedFestival(appLanguage, festival.label || festival.key)}</Text>
                       <Text style={styles.entityBody}>{tr("search.tapFestivalToBrowse")}</Text>
                     </View>
                     <Ionicons
@@ -345,7 +346,7 @@ export function SearchScreen({ navigation, route }: { navigation: any; route?: a
                       <Text style={styles.entityIconText}>🙏</Text>
                     </View>
                     <View style={styles.entityCopy}>
-                      <Text style={styles.entityTitle}>{deity.label}</Text>
+                      <Text style={styles.entityTitle}>{getLocalizedDeity(appLanguage, deity.label || deity.key)}</Text>
                       <Text style={styles.entityBody}>{tr("search.tapDeityToBrowse")}</Text>
                     </View>
                     <Ionicons
@@ -386,7 +387,7 @@ export function SearchScreen({ navigation, route }: { navigation: any; route?: a
                   <View style={styles.badgeRow}>
                     <Text style={styles.resultBadge}>{getLocalizedCategory(appLanguage, prayer.category)}</Text>
                     <Text style={styles.resultMeta}>{getLocalizedDeity(appLanguage, prayer.deity)}</Text>
-                    <Text style={styles.resultMeta}>{prayer.duration}</Text>
+                    <Text style={styles.resultMeta}>{getLocalizedReadDuration(appLanguage, prayer.duration)}</Text>
                   </View>
                   <Text style={styles.resultFestivalText}>
                     {prayer.festivals.map((festival) => getLocalizedFestival(appLanguage, festival)).join(" • ")}

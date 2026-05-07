@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FeedbackModal } from "../components/FeedbackModal";
 import { GradientHeader } from "../components/GradientHeader";
@@ -33,6 +33,9 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
   const [contactNumber, setContactNumber] = useState(user?.contactNumber ?? "");
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveTitle, setSaveTitle] = useState("Profile Updated");
+  const [saveMessage, setSaveMessage] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     setName(user?.name ?? "");
@@ -56,12 +59,22 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
           ? tr("premium.gracePeriod")
           : tr("premium.inactive");
 
-  const handleSave = () => {
-    updateProfile({
+  const handleSave = async () => {
+    setSavingProfile(true);
+    const result = await updateProfile({
       name: name.trim() || "Devotee",
       email: email.trim(),
       contactNumber: contactNumber.trim(),
     });
+    setSavingProfile(false);
+
+    if (result.error) {
+      Alert.alert("Profile Update", result.error);
+      return;
+    }
+
+    setSaveTitle(user?.isGuest ? "Saved for This Session" : "Profile Updated");
+    setSaveMessage(result.notice || tr("common.profileUpdated"));
     setShowSaveModal(true);
   };
 
@@ -110,8 +123,25 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
               </Text>
             </View>
           </View>
-          <Pressable style={styles.premiumButton} onPress={() => navigation.navigate("Premium")}>
-            <Text style={styles.premiumButtonText}>{tr("profile.viewPremium")}</Text>
+          <Pressable
+            style={styles.premiumButton}
+            onPress={() => {
+              if (user?.isGuest) {
+                void logout();
+                return;
+              }
+
+              navigation.navigate("Premium", {
+                postPurchaseRedirect: {
+                  name: "MainTabs",
+                  params: { screen: "ProfileTab" },
+                },
+              });
+            }}
+          >
+            <Text style={styles.premiumButtonText}>
+              {user?.isGuest ? tr("common.signInToContinue") : tr("profile.viewPremium")}
+            </Text>
           </Pressable>
         </SectionCard>
 
@@ -125,13 +155,40 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
         </SectionCard>
 
         <SectionCard>
+          <Text style={styles.sectionTitle}>{tr("profile.sadhana")}</Text>
+          <Text style={styles.sectionSubtitle}>{tr("profile.sadhanaBody")}</Text>
+          <Pressable style={styles.outlinePrimaryButton} onPress={() => navigation.navigate("DailySadhana")}>
+            <Ionicons name="leaf-outline" size={18} color={AppColors.maroon} />
+            <Text style={styles.outlinePrimaryButtonText}>{tr("profile.openSadhana")}</Text>
+          </Pressable>
+        </SectionCard>
+
+        <SectionCard>
+          <Text style={styles.sectionTitle}>{tr("profile.familyLearning")}</Text>
+          <Text style={styles.sectionSubtitle}>{tr("profile.familyLearningBody")}</Text>
+          <Pressable style={styles.outlinePrimaryButton} onPress={() => navigation.navigate("FamilyLearning")}>
+            <Ionicons name="people-outline" size={18} color={AppColors.maroon} />
+            <Text style={styles.outlinePrimaryButtonText}>{tr("profile.openFamilyLearning")}</Text>
+          </Pressable>
+        </SectionCard>
+
+        <SectionCard>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{tr("profile.personalDetails")}</Text>
-            <Pressable style={styles.photoButton} onPress={() => setAvatarPickerOpen(true)}>
+            <Pressable
+              style={[styles.photoButton, savingProfile && styles.buttonDisabled]}
+              onPress={() => setAvatarPickerOpen(true)}
+              disabled={savingProfile}
+            >
               <Ionicons name="camera-outline" size={16} color={AppColors.maroon} />
               <Text style={styles.photoButtonText}>{tr("common.changePhoto")}</Text>
             </Pressable>
           </View>
+          {user?.isGuest ? (
+            <Text style={styles.sessionNotice}>
+              Changes here stay with this guest session until you sign out.
+            </Text>
+          ) : null}
 
           <View style={styles.fieldWrap}>
             <Text style={styles.fieldLabel}>{tr("profile.fullName")}</Text>
@@ -169,8 +226,16 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
             />
           </View>
 
-          <Pressable style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>{tr("common.saveProfile")}</Text>
+          <Pressable
+            style={[styles.saveButton, savingProfile && styles.buttonDisabled]}
+            onPress={() => void handleSave()}
+            disabled={savingProfile}
+          >
+            {savingProfile ? (
+              <ActivityIndicator color="#FFF5E4" />
+            ) : (
+              <Text style={styles.saveButtonText}>{tr("common.saveProfile")}</Text>
+            )}
           </Pressable>
         </SectionCard>
 
@@ -225,13 +290,17 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
         <SectionCard>
           <Text style={styles.sectionTitle}>{tr("profile.session")}</Text>
           <Text style={styles.sectionSubtitle}>
-            {isSupabaseConnected
-              ? "Supabase session is connected. Email sign-in is live and Google sign-in will be added next."
-              : tr("common.mockAuthNote")}
+            {user?.isGuest
+              ? "You are exploring BhaktiVerse in guest mode. Sign in any time to keep your preferences and personal features with your account."
+              : isSupabaseConnected
+                ? "You are signed in. Your devotional preferences and premium access stay connected to this account."
+                : "Account sign-in is not available in this build yet."}
           </Text>
           <Pressable style={styles.logoutButton} onPress={logout}>
             <Ionicons name="log-out-outline" size={18} color={AppColors.maroon} />
-            <Text style={styles.logoutButtonText}>{tr("common.logout")}</Text>
+            <Text style={styles.logoutButtonText}>
+              {user?.isGuest ? "Exit Guest Mode" : tr("common.logout")}
+            </Text>
           </Pressable>
         </SectionCard>
       </View>
@@ -245,9 +314,20 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
                 <Pressable
                   key={avatar}
                   style={styles.avatarChoice}
-                  onPress={() => {
-                    updateProfile({ photoUri: avatar });
+                  onPress={async () => {
+                    setSavingProfile(true);
+                    const result = await updateProfile({ photoUri: avatar });
+                    setSavingProfile(false);
                     setAvatarPickerOpen(false);
+
+                    if (result.error) {
+                      Alert.alert("Profile Update", result.error);
+                      return;
+                    }
+
+                    setSaveTitle(user?.isGuest ? "Saved for This Session" : "Profile Updated");
+                    setSaveMessage(result.notice || tr("common.profileUpdated"));
+                    setShowSaveModal(true);
                   }}
                 >
                   <Text style={styles.avatarChoiceText}>{avatar}</Text>
@@ -263,8 +343,8 @@ export function ProfileScreen({ navigation }: { navigation: any }) {
 
       <FeedbackModal
         visible={showSaveModal}
-        title="Profile Updated"
-        message={tr("common.profileUpdated")}
+        title={saveTitle}
+        message={saveMessage || tr("common.profileUpdated")}
         buttonLabel="Continue"
         onClose={() => setShowSaveModal(false)}
       />
@@ -409,6 +489,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
+  sessionNotice: {
+    color: AppColors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
   photoButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -451,6 +537,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   saveButtonText: {
     color: "#FFF5E4",

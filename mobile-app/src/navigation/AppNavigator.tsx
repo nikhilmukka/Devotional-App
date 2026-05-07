@@ -15,6 +15,8 @@ import { FavoritesScreen } from "../screens/FavoritesScreen";
 import { PremiumScreen } from "../screens/PremiumScreen";
 import { ShlokaNotebookScreen } from "../screens/ShlokaNotebookScreen";
 import { FestivalGuideScreen } from "../screens/FestivalGuideScreen";
+import { DailySadhanaScreen } from "../screens/DailySadhanaScreen";
+import { FamilyLearningScreen } from "../screens/FamilyLearningScreen";
 import { t } from "../i18n";
 import { AppColors } from "../theme/colors";
 
@@ -27,6 +29,7 @@ function MainTabs() {
 
   return (
     <Tab.Navigator
+      key={appLanguage}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
@@ -106,6 +109,8 @@ export function AppNavigator() {
           <Stack.Screen name="Premium" component={PremiumScreen} />
           <Stack.Screen name="ShlokaNotebook" component={ShlokaNotebookScreen} />
           <Stack.Screen name="FestivalGuide" component={FestivalGuideScreen} />
+          <Stack.Screen name="DailySadhana" component={DailySadhanaScreen} />
+          <Stack.Screen name="FamilyLearning" component={FamilyLearningScreen} />
         </>
       )}
     </Stack.Navigator>

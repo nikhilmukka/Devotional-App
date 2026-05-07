@@ -7,7 +7,7 @@ import { SectionCard } from "../components/SectionCard";
 import { useApp } from "../context/AppContext";
 import { fetchPrayerCatalog, type PrayerListItem } from "../lib/supabase/content";
 import { getPrayerById } from "../data/sampleContent";
-import { getLocalizedCategory, getLocalizedDeity, getLocalizedPrayerTitle, t } from "../i18n";
+import { getLocalizedCategory, getLocalizedDeity, getLocalizedPrayerTitle, getLocalizedReadDuration, t } from "../i18n";
 import { AppColors } from "../theme/colors";
 
 export function FavoritesScreen({ navigation }: { navigation: any }) {
@@ -71,12 +71,12 @@ export function FavoritesScreen({ navigation }: { navigation: any }) {
                 <Text style={styles.prayerIconText}>🙏</Text>
               </View>
               <View style={styles.prayerTextWrap}>
-                <Text style={styles.prayerTitle}>{prayer.title}</Text>
+                <Text style={styles.prayerTitle}>{getLocalizedPrayerTitle(appLanguage, prayer.title)}</Text>
                 {prayer.isPremium ? <Text style={styles.premiumPill}>{tr("common.premium")}</Text> : null}
                 <View style={styles.prayerMetaRow}>
                   <Text style={styles.prayerBadge}>{getLocalizedCategory(appLanguage, prayer.category)}</Text>
-                  <Text style={styles.prayerMeta}>{prayer.deity}</Text>
-                  <Text style={styles.prayerMeta}>{prayer.duration}</Text>
+                  <Text style={styles.prayerMeta}>{getLocalizedDeity(appLanguage, prayer.deity)}</Text>
+                  <Text style={styles.prayerMeta}>{getLocalizedReadDuration(appLanguage, prayer.duration)}</Text>
                 </View>
               </View>
               <Pressable

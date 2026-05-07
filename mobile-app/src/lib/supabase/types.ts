@@ -60,6 +60,16 @@ export type UserPreferencesRow = {
   notifications_enabled: boolean;
   daily_reminder_enabled: boolean;
   festival_reminder_enabled: boolean;
+  festival_preparation_reminder_enabled: boolean;
+  festival_preparation_lead_days: number;
+  daily_sadhana_enabled: boolean;
+  daily_sadhana_duration_minutes: number;
+  daily_sadhana_focus: string;
+  daily_sadhana_preferred_deity: string | null;
+  family_learning_enabled: boolean;
+  family_learning_age_group: string;
+  family_learning_mode: string;
+  family_learning_preferred_deity: string | null;
   reminder_time_local: string;
 };
 
@@ -89,6 +99,17 @@ export type UserPrivateShlokaRow = {
   recording_storage_path: string | null;
   recording_duration_seconds: number | null;
   recording_uploaded_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserSadhanaSessionRow = {
+  id: string;
+  user_id: string;
+  session_type: "daily_sadhana" | "family_learning";
+  session_date: string;
+  completed_at: string;
+  metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };

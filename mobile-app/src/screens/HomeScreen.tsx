@@ -14,6 +14,7 @@ import {
   featuredPrayers,
   festivalCatalog,
   getPrayerIdByTitle,
+  prayerCatalog,
 } from "../data/sampleContent";
 import {
   getLocalizedCategory,
@@ -21,6 +22,7 @@ import {
   getLocalizedDeity,
   getLocalizedFestival,
   getLocalizedPrayerTitle,
+  getLocalizedReadDuration,
   getLocalizedWeekday,
   t,
 } from "../i18n";
@@ -42,24 +44,22 @@ const deityVisuals: Record<
 
 const festivalVisuals: Record<
   string,
-  { symbol: string; nativeLabel: string; colors: [string, string]; prayers: string; chip?: string }
+  { symbol: string; colors: [string, string]; chip?: "thisMonth" }
 > = {
-  Diwali: { symbol: "🪔", nativeLabel: "दीपावली", colors: ["#FF9500", "#D4572A"], prayers: "6 Prayers" },
+  Diwali: { symbol: "🪔", colors: ["#FF9500", "#D4572A"] },
   Navratri: {
     symbol: "🌺",
-    nativeLabel: "नवरात्रि",
     colors: ["#C93A3A", "#9729A7"],
-    prayers: "5 Prayers",
-    chip: "This month",
+    chip: "thisMonth",
   },
   "Ganesh Chaturthi": {
     symbol: "🐘",
-    nativeLabel: "गणेश चतुर्थी",
     colors: ["#FF9D4D", "#D9A037"],
-    prayers: "4 Prayers",
   },
-  Holi: { symbol: "🎨", nativeLabel: "होली", colors: ["#C94565", "#FF8C42"], prayers: "3 Prayers" },
+  Holi: { symbol: "🎨", colors: ["#C94565", "#FF8C42"] },
 };
+
+const defaultFestivalVisual = { symbol: "✨", colors: ["#E07A2D", "#C95A2C"] as [string, string] };
 
 export function HomeScreen({ navigation }: { navigation: any }) {
   const {
@@ -72,10 +72,12 @@ export function HomeScreen({ navigation }: { navigation: any }) {
     setPrayerSourceLanguage,
     isFavoritePrayer,
     toggleFavoritePrayer,
+    logout,
   } = useApp();
   const tr = (path: string) => t(appLanguage, path);
   const displayName = (user?.name || "Bhakti").split(" ")[0];
   const [liveFeaturedPrayers, setLiveFeaturedPrayers] = useState<PrayerListItem[]>([]);
+  const [liveCatalog, setLiveCatalog] = useState<PrayerListItem[]>([]);
   const [liveDeities, setLiveDeities] = useState<BrowseItem[]>([]);
   const [liveFestivals, setLiveFestivals] = useState<BrowseItem[]>([]);
   const [liveReminder, setLiveReminder] = useState<HomeReminderItem | null>(null);
@@ -93,6 +95,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
         if (!active || !content) return;
 
         setLiveFeaturedPrayers(content.featuredPrayers);
+        setLiveCatalog(content.catalog);
         setLiveDeities(content.deityNames);
         setLiveFestivals(content.festivalNames);
         setLiveReminder(content.reminder);
@@ -154,6 +157,26 @@ export function HomeScreen({ navigation }: { navigation: any }) {
         accessTier: "free" as const,
         isPremium: false,
       }));
+  const fullCatalog = liveCatalog.length
+    ? liveCatalog
+    : prayerCatalog.map((prayer) => ({
+        ...prayer,
+        deityKey: prayer.deity,
+        festivalKeys: prayer.festivals,
+        accessTier: "free" as const,
+        isPremium: false,
+      }));
+  const festivalPrayerCounts = useMemo(
+    () =>
+      fullCatalog.reduce<Record<string, number>>((acc, prayer) => {
+        prayer.festivalKeys.forEach((festivalKey) => {
+          acc[festivalKey] = (acc[festivalKey] ?? 0) + 1;
+        });
+        return acc;
+      }, {}),
+    [fullCatalog]
+  );
+  const premiumEntryLabel = user?.isGuest ? tr("common.signInToContinue") : tr("common.unlockPremium");
 
   return (
     <ScreenContainer>
@@ -239,8 +262,8 @@ export function HomeScreen({ navigation }: { navigation: any }) {
               <Text style={styles.todayCardTitle}>{getLocalizedPrayerTitle(appLanguage, todayReminder.title)}</Text>
               <Text style={styles.todayCardMeta}>
                 {todayReminder.type === "festival"
-                  ? `Today · March · ${todayReminder.duration}`
-                  : `${getLocalizedWeekday(appLanguage, todayReminder.dayLabel)} · ${todayReminder.duration}`}
+                  ? `${getLocalizedFestival(appLanguage, todayReminder.festival || "")} · ${getLocalizedReadDuration(appLanguage, todayReminder.duration)}`
+                  : `${getLocalizedWeekday(appLanguage, todayReminder.dayLabel)} · ${getLocalizedReadDuration(appLanguage, todayReminder.duration)}`}
               </Text>
             </View>
 
@@ -259,6 +282,30 @@ export function HomeScreen({ navigation }: { navigation: any }) {
           </LinearGradient>
         </Pressable>
 
+        {hasPremiumAccess ? (
+          <>
+            <PremiumFeatureCard
+              eyebrow={tr("common.premium")}
+              icon="leaf-outline"
+              title={tr("home.sadhanaTitle")}
+              body={tr("home.sadhanaBody")}
+              bullets={[tr("home.sadhanaPoint1"), tr("home.sadhanaPoint2")]}
+              ctaLabel={tr("home.sadhanaCta")}
+              onPress={() => navigation.navigate("DailySadhana")}
+            />
+
+            <PremiumFeatureCard
+              eyebrow={tr("common.premium")}
+              icon="people-outline"
+              title={tr("home.familyTitle")}
+              body={tr("home.familyBody")}
+              bullets={[tr("home.familyPoint1"), tr("home.familyPoint2")]}
+              ctaLabel={tr("home.familyCta")}
+              onPress={() => navigation.navigate("FamilyLearning")}
+            />
+          </>
+        ) : null}
+
         {!hasPremiumAccess ? (
           <PremiumFeatureCard
             eyebrow={tr("common.premium")}
@@ -266,8 +313,20 @@ export function HomeScreen({ navigation }: { navigation: any }) {
             title={tr("home.premiumGuidesTitle")}
             body={tr("home.premiumGuidesBody")}
             bullets={[tr("home.premiumGuidesPoint1"), tr("home.premiumGuidesPoint2")]}
-            ctaLabel={tr("common.unlockPremium")}
-            onPress={() => navigation.navigate("Premium")}
+            ctaLabel={premiumEntryLabel}
+            onPress={() => {
+              if (user?.isGuest) {
+                void logout();
+                return;
+              }
+
+              navigation.navigate("Premium", {
+                postPurchaseRedirect: {
+                  name: "MainTabs",
+                  params: { screen: "HomeTab" },
+                },
+              });
+            }}
           />
         ) : null}
 
@@ -282,7 +341,8 @@ export function HomeScreen({ navigation }: { navigation: any }) {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.festivalScroll}>
           {displayFestivals.map((festival) => {
-            const visual = festivalVisuals[festival.key] ?? festivalVisuals.Diwali;
+            const visual = festivalVisuals[festival.key] ?? defaultFestivalVisual;
+            const prayerCount = festivalPrayerCounts[festival.key] ?? 0;
             return (
               <Pressable
                 key={festival.key}
@@ -292,16 +352,19 @@ export function HomeScreen({ navigation }: { navigation: any }) {
                   {visual.chip ? (
                     <View style={styles.festivalChip}>
                       <View style={styles.festivalChipDot} />
-                      <Text style={styles.festivalChipText}>{visual.chip}</Text>
+                      <Text style={styles.festivalChipText}>
+                        {visual.chip === "thisMonth" ? tr("home.thisMonth") : visual.chip}
+                      </Text>
                     </View>
                   ) : null}
                   <View style={styles.festivalIconBox}>
                     <Text style={styles.festivalIcon}>{visual.symbol}</Text>
                   </View>
-                  <Text style={styles.festivalTitle}>{festival.label}</Text>
-                  <Text style={styles.festivalNative}>{visual.nativeLabel}</Text>
+                  <Text style={styles.festivalTitle}>{getLocalizedFestival(appLanguage, festival.label || festival.key)}</Text>
                   <View style={styles.prayerCountPill}>
-                    <Text style={styles.prayerCountText}>{visual.prayers}</Text>
+                    <Text style={styles.prayerCountText}>
+                      {prayerCount} {tr("common.prayers")}
+                    </Text>
                   </View>
                 </LinearGradient>
               </Pressable>
@@ -336,7 +399,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
                 <LinearGradient colors={visual.bubble} style={styles.deityIconBox}>
                   <Text style={styles.deityIcon}>{visual.symbol}</Text>
                 </LinearGradient>
-                <Text style={styles.deityName}>{deity.label}</Text>
+                <Text style={styles.deityName}>{getLocalizedDeity(appLanguage, deity.label || deity.key)}</Text>
               </Pressable>
             );
           })}
@@ -360,12 +423,12 @@ export function HomeScreen({ navigation }: { navigation: any }) {
               </LinearGradient>
 
               <View style={styles.prayerTextWrap}>
-                <Text style={styles.prayerTitle}>{prayer.title}</Text>
+                <Text style={styles.prayerTitle}>{getLocalizedPrayerTitle(appLanguage, prayer.title)}</Text>
                 {prayer.isPremium ? <Text style={styles.premiumPill}>{tr("common.premium")}</Text> : null}
                 <View style={styles.prayerMetaRow}>
                   <Text style={styles.prayerBadge}>{getLocalizedCategory(appLanguage, prayer.category)}</Text>
-                  <Text style={styles.prayerMeta}>{prayer.deity}</Text>
-                  <Text style={styles.prayerMeta}>◷ {prayer.duration}</Text>
+                  <Text style={styles.prayerMeta}>{getLocalizedDeity(appLanguage, prayer.deity)}</Text>
+                  <Text style={styles.prayerMeta}>◷ {getLocalizedReadDuration(appLanguage, prayer.duration)}</Text>
                 </View>
               </View>
 

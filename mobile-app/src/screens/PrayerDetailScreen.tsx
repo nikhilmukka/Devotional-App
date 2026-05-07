@@ -13,7 +13,9 @@ import { getPrayerById, getPrayerContentById } from "../data/sampleContent";
 import {
   getLocalizedCategory,
   getLocalizedDeity,
+  getLocalizedPrayerNote,
   getLocalizedPrayerTitle,
+  getLocalizedReadDuration,
   getPrayerSourceLabel,
   t,
 } from "../i18n";
@@ -24,12 +26,14 @@ const fontLabels = ["S", "M", "L"];
 
 export function PrayerDetailScreen({ navigation, route }: { navigation: any; route: any }) {
   const {
+    user,
     appLanguage,
     prayerSourceLanguage,
     hasPremiumAccess,
     isFavoritePrayer,
     toggleFavoritePrayer,
     isSupabaseConnected,
+    logout,
   } = useApp();
   const prayerId = route?.params?.prayerId ?? "hanuman-chalisa";
   const tr = (path: string) => t(appLanguage, path);
@@ -97,6 +101,8 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
   };
   const localizedTitle = liveDetail?.prayer.title ?? getLocalizedPrayerTitle(appLanguage, fallbackPrayer.title);
   const localizedDeity = liveDetail?.prayer.deity ?? getLocalizedDeity(appLanguage, fallbackPrayer.deity);
+  const localizedDuration = getLocalizedReadDuration(appLanguage, prayer.duration);
+  const localizedNote = getLocalizedPrayerNote(appLanguage, liveDetail?.note || fallbackContent.note);
   const verses = useMemo(
     () =>
       liveDetail?.verses?.length
@@ -118,6 +124,7 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
     ? getPrayerSourceLabel(liveDetail.audioLanguage)
     : sourceLanguageLabel;
   const isPremiumLocked = Boolean(liveDetail?.isPremiumLocked);
+  const premiumEntryLabel = user?.isGuest ? tr("common.signInToContinue") : tr("common.unlockPremium");
   const isAudioPremiumLocked = Boolean(liveDetail?.isAudioPremiumLocked);
   const progressRatio = previewRatio ?? (durationMillis > 0 ? positionMillis / durationMillis : 0);
   const displayedPositionMillis =
@@ -215,7 +222,7 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
     <ScreenContainer>
       <GradientHeader
         title={localizedTitle}
-        subtitle={prayer.duration}
+        subtitle={localizedDuration}
         rightSlot={
           <View style={styles.headerActions}>
             <Pressable style={styles.iconButton} onPress={() => toggleFavoritePrayer(prayer.id)}>
@@ -266,10 +273,10 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
 
       <View style={styles.content}>
         <SectionCard>
-          <Text style={styles.audioLabel}>{liveDetail?.note || fallbackContent.note}</Text>
+          <Text style={styles.audioLabel}>{localizedNote}</Text>
           <Text style={styles.audioTitle}>{localizedTitle}</Text>
           <Text style={styles.audioMeta}>
-            {localizedDeity} · {prayer.duration}
+            {localizedDeity} · {localizedDuration}
           </Text>
           <View style={styles.audioRow}>
             <AudioSeekBar
@@ -336,7 +343,7 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
                   ? tr("audio.nowPlaying")
                   : tr("audio.tapToListen")
                 : isAudioPremiumLocked
-                  ? tr("common.unlockPremium")
+                  ? premiumEntryLabel
                   : tr("audio.browserPreview")}
             </Text>
           </View>
@@ -352,8 +359,20 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
               tr("premium.featureAudio"),
               tr("premium.featureSadhana"),
             ]}
-            ctaLabel={tr("common.unlockPremium")}
-            onPress={() => navigation.navigate("Premium")}
+            ctaLabel={premiumEntryLabel}
+            onPress={() => {
+              if (user?.isGuest) {
+                void logout();
+                return;
+              }
+
+              navigation.navigate("Premium", {
+                postPurchaseRedirect: {
+                  name: "PrayerDetail",
+                  params: { prayerId },
+                },
+              });
+            }}
           />
         ) : null}
 
@@ -368,8 +387,20 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
               tr("prayerDetail.premiumMeaningPoint2"),
               tr("prayerDetail.premiumMeaningPoint3"),
             ]}
-            ctaLabel={tr("common.unlockPremium")}
-            onPress={() => navigation.navigate("Premium")}
+            ctaLabel={premiumEntryLabel}
+            onPress={() => {
+              if (user?.isGuest) {
+                void logout();
+                return;
+              }
+
+              navigation.navigate("Premium", {
+                postPurchaseRedirect: {
+                  name: "PrayerDetail",
+                  params: { prayerId },
+                },
+              });
+            }}
           />
         ) : (
           <SectionCard>
@@ -402,8 +433,20 @@ export function PrayerDetailScreen({ navigation, route }: { navigation: any; rou
               tr("prayerDetail.premiumMeaningPoint2"),
               tr("prayerDetail.premiumMeaningPoint3"),
             ]}
-            ctaLabel={tr("common.unlockPremium")}
-            onPress={() => navigation.navigate("Premium")}
+            ctaLabel={premiumEntryLabel}
+            onPress={() => {
+              if (user?.isGuest) {
+                void logout();
+                return;
+              }
+
+              navigation.navigate("Premium", {
+                postPurchaseRedirect: {
+                  name: "PrayerDetail",
+                  params: { prayerId },
+                },
+              });
+            }}
           />
         ) : null}
       </View>

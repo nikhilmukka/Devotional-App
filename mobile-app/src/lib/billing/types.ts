@@ -1,4 +1,5 @@
 import type { SubscriptionTier } from "../supabase/types";
+import type { CustomerInfo } from "react-native-purchases";
 
 export type BillingProductId =
   | "bhaktiverse_premium_individual_monthly"
@@ -25,7 +26,7 @@ export type BillingSetupSummary = {
 export type BillingPurchaseResult = {
   ok: boolean;
   message: string;
-  customerInfo?: unknown | null;
+  customerInfo?: CustomerInfo | null;
   userCancelled?: boolean;
 };
 
@@ -38,4 +39,9 @@ export type RevenueCatPackageSummary = {
   displayTitle: string;
   description: string;
   priceString: string;
+};
+
+export type RevenueCatResolvedProduct = {
+  tier: SubscriptionTier;
+  productCode: BillingProductId | null;
 };

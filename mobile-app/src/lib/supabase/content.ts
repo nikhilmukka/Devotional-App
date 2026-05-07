@@ -1,5 +1,6 @@
 import { getSupabaseClient, isSupabaseConfigured } from "./client";
 import { toDbLanguage } from "./types";
+import { getLocalizedReadDuration } from "../../i18n";
 
 export type ContentAccessTier = "free" | "premium";
 
@@ -199,9 +200,9 @@ function hasAccessToTier(accessTier: ContentAccessTier | null | undefined, hasPr
   return (accessTier ?? "free") === "free" || hasPremiumAccess;
 }
 
-function formatDuration(seconds: number | null | undefined) {
+function formatDuration(seconds: number | null | undefined, appLanguage: string) {
   const minutes = Math.max(1, Math.round((seconds ?? 180) / 60));
-  return `${minutes} min read`;
+  return getLocalizedReadDuration(appLanguage, `${minutes} min read`);
 }
 
 function chooseTranslatedValue<T extends { language: string } & Record<string, any>>(
@@ -259,6 +260,40 @@ function choosePrayerText(
   }
 
   return rows.find((item) => item.prayer_id === prayerId) ?? null;
+}
+
+function choosePrayerDisplayTitle(
+  rows: TranslationRow[],
+  prayerId: string,
+  appLanguage: string
+) {
+  const appDbLanguage = toDbLanguage(appLanguage).toString();
+
+  const preferred =
+    appLanguage === "English"
+      ? [
+          { language: "english", script: "native" },
+          { language: "english", script: "latin" },
+        ]
+      : [
+          { language: appDbLanguage, script: "native" },
+          { language: appDbLanguage, script: "latin" },
+          { language: "english", script: "native" },
+          { language: "english", script: "latin" },
+        ];
+
+  for (const candidate of preferred) {
+    const row = rows.find(
+      (item) =>
+        item.prayer_id === prayerId &&
+        item.language === candidate.language &&
+        item.script === candidate.script &&
+        item.title
+    );
+    if (row?.title) return row.title;
+  }
+
+  return chooseTranslatedValue(rows, (row) => row.prayer_id === prayerId, "english", "title");
 }
 
 function getPrayerVerses(textRow: TranslationRow | null) {
@@ -421,7 +456,7 @@ export async function fetchPrayerCatalog(
   const festivalById = new Map(festivals.map((festival) => [festival.id, festival]));
 
   return prayers.map((prayer) => {
-    const text = choosePrayerText(prayerTexts, prayer.id, appLanguage, prayerSourceLanguage);
+    const text = choosePrayerDisplayTitle(prayerTexts, prayer.id, appLanguage);
     const deity = prayer.deity_id ? deityById.get(prayer.deity_id) : null;
     const linkedFestivalIds = prayerFestivals
       .filter((item) => item.prayer_id === prayer.id)
@@ -429,7 +464,7 @@ export async function fetchPrayerCatalog(
 
     return {
       id: prayer.slug,
-      title: text?.title ?? prayer.slug,
+      title: text || prayer.slug,
       deityKey: deity
         ? chooseTranslatedValue(
             deityTranslations,
@@ -447,7 +482,7 @@ export async function fetchPrayerCatalog(
           ) || deity.slug
         : "",
       category: prayer.category,
-      duration: formatDuration(prayer.estimated_duration_seconds),
+      duration: formatDuration(prayer.estimated_duration_seconds, appLanguage),
       accessTier: prayer.access_tier ?? "free",
       isPremium: (prayer.access_tier ?? "free") === "premium",
       festivals: linkedFestivalIds
@@ -793,6 +828,11 @@ export async function fetchPrayerDetail(
     appLanguage,
     prayerSourceLanguage
   );
+  const displayTitle = choosePrayerDisplayTitle(
+    (textRows ?? []) as TranslationRow[],
+    prayerData.id,
+    appLanguage
+  );
 
   if (!chosen) return null;
 
@@ -809,7 +849,7 @@ export async function fetchPrayerDetail(
   return {
     prayer: {
       ...listItem,
-      title: chosen.title || listItem.title,
+      title: displayTitle || listItem.title,
     },
     sourceLanguage:
       appLanguage === "English" ? prayerSourceLanguage : appLanguage,

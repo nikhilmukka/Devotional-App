@@ -18,6 +18,7 @@ const translations: Record<LanguageKey, TranslationTree> = {
       seeAll: "See all",
       premium: "Premium",
       unlockPremium: "Unlock Premium",
+      signInToContinue: "Sign In to Continue",
       prayers: "prayers",
       quickSelect: "Quick Select",
       searchPath: "Search Path",
@@ -48,6 +49,17 @@ const translations: Record<LanguageKey, TranslationTree> = {
         "Premium is where BhaktiVerse becomes a structured devotional companion, not just a prayer reader.",
       premiumGuidesPoint1: "Festival pooja guides with items, steps, and audio follow-along",
       premiumGuidesPoint2: "Personalized daily sadhana plans for busy schedules",
+      sadhanaTitle: "Open your daily sadhana plan",
+      sadhanaBody: "Shape a short devotional rhythm around your time, focus, and preferred deity.",
+      sadhanaPoint1: "Choose a 10, 15, or 20 minute flow",
+      sadhanaPoint2: "Get a simple prayer sequence you can actually follow",
+      sadhanaCta: "Open Daily Sadhana",
+      familyTitle: "Start a family learning moment",
+      familyBody: "Turn one prayer into a simple family practice with meaning, repetition, and age-friendly prompts.",
+      familyPoint1: "Choose an age group and learning style",
+      familyPoint2: "Get a short guided flow children and parents can do together",
+      familyCta: "Open Family Learning",
+      thisMonth: "This Month",
       mantraLine: "Om Namah Shivaya",
     },
     search: {
@@ -88,6 +100,7 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browserPreview: "Browser voice preview for now",
       tapToListen: "Tap to listen",
       audioPrayer: "Audio Prayer",
+      nowPlaying: "Now playing",
     },
     reminders: {
       title: "Prayer Reminders",
@@ -108,6 +121,18 @@ const translations: Record<LanguageKey, TranslationTree> = {
       advancedPoint1: "Festival preparation reminders one or two days in advance",
       advancedPoint2: "Household positivity and daily sadhana reminder plans",
       advancedPoint3: "Family-friendly reminder flows for children and parents",
+      premiumSectionTitle: "Premium Reminder Settings",
+      premiumSectionBody:
+        "These premium reminder settings help you prepare before festival day, not only react on the day itself.",
+      preparationReminderTitle: "Festival preparation reminders",
+      preparationReminderBody:
+        "Get a devotional reminder before an upcoming festival so you can gather items and prepare your prayer flow early.",
+      preparationLeadTimeTitle: "Preparation lead time",
+      preparationLeadTimeBody:
+        "Choose how early BhaktiVerse should remind you before a festival prayer day.",
+      preparationReminderShort: "Festival Preparation",
+      preparationLeadOneDay: "1 day ahead",
+      preparationLeadTwoDays: "2 days ahead",
     },
     prayerDetail: {
       prayerText: "Prayer Text",
@@ -115,6 +140,9 @@ const translations: Record<LanguageKey, TranslationTree> = {
       transliterated: "in English",
       textSize: "Text Size",
       shareMessage: "Read this prayer on BhaktiVerse",
+      featuredPrayer: "Featured Prayer",
+      devotionalPrayer: "Devotional Prayer",
+      eveningPrayer: "Evening Prayer",
       lockedPrayerTitle: "This prayer is part of Premium",
       lockedPrayerBody:
         "You can still discover premium prayers in the app, but full reading access is unlocked with BhaktiVerse Premium.",
@@ -146,11 +174,17 @@ const translations: Record<LanguageKey, TranslationTree> = {
       notebook: "Private Shloka Notebook",
       notebookBody: "Write and revisit your own daily shloka recitations in a private devotional notebook.",
       openNotebook: "Open Notebook",
+      sadhana: "Daily Sadhana",
+      sadhanaBody: "Build a short, repeatable devotional plan based on your time, focus, and preferred deity.",
+      openSadhana: "Open Daily Sadhana",
+      familyLearning: "Kids & Family Learning",
+      familyLearningBody: "Guide children and families through short devotional sessions with meaning, repetition, and gentle shared practice.",
+      openFamilyLearning: "Open Family Learning",
       session: "Session",
     },
     premium: {
       title: "BhaktiVerse Premium",
-      subtitle: "Guided devotional practice for busy families, not just a prayer library",
+      subtitle: "A calmer, more guided way to practice every day",
       currentPlan: "Current Plan",
       freePlan: "Free",
       premiumIndividual: "Premium Individual",
@@ -161,44 +195,61 @@ const translations: Record<LanguageKey, TranslationTree> = {
       trial: "Trial",
       gracePeriod: "Grace Period",
       validUntil: "Valid Until",
-      compareFree: "Free vs Premium",
-      whyUpgrade: "What Premium Unlocks",
-      freeLine1: "Prayer reading, search, favorites, and basic reminders",
-      freeLine2: "Weekly audio set and core devotional browsing",
-      premiumLine1: "Guided rituals, premium audio, and smarter devotional routines",
-      premiumLine2: "Family learning, private recitations, and richer personalized support",
-      featureFestivalGuides: "Festival pooja guides with samagri and step-by-step flows",
-      featureAudio: "Full audio library, guided sessions, and richer playback features",
-      featureSadhana: "Personalized daily sadhana plans and smarter reminders",
-      featureKids: "Kids and family learning with meanings and practice mode",
-      featureNotebook: "Private shloka notebook for saved daily recitation",
-      featureVoice: "Record and revisit your own recitation",
-      freeBody: "You currently have access to the free devotional experience.",
-      premiumBody: "This account already has premium devotional access unlocked.",
-      familyBody: "Family access is enabled for this account and can support shared devotional use later.",
-      comingSoon: "Checkout Coming Soon",
+      compareFree: "What's Included",
+      whyUpgrade: "Premium Includes",
+      freeLine1: "Prayer reading, search, favorites, and everyday reminders",
+      freeLine2: "Core audio access and devotional browsing across deities and festivals",
+      premiumLine1: "Guided festival worship, full audio access, and smarter routines",
+      premiumLine2: "Private recitations, family learning, and a more personalized devotional flow",
+      featureFestivalGuides: "Festival guides with items needed and step-by-step flow",
+      featureAudio: "Full audio library with richer playback",
+      featureSadhana: "Smarter reminder plans and daily sadhana guidance",
+      featureKids: "Kids and family learning with meanings and practice support",
+      featureNotebook: "Private shloka notebook for personal recitation",
+      featureVoice: "Record and replay your own recitation",
+      freeBody: "You are currently on the free plan.",
+      premiumBody: "Premium access is active on this account.",
+      familyBody: "Family Premium access is active on this account.",
+      comingSoon: "Premium Access",
       billingNote:
-        "In-app subscription checkout will be connected next. The app is now ready to recognize free and premium access.",
+        "Premium checkout is being finalized. You can already review plans and benefits here.",
       billingReadyBody:
-        "RevenueCat is configured. As soon as your store products and offerings are live, users can purchase and restore BhaktiVerse Premium from here.",
+        "Choose a plan to unlock premium across BhaktiVerse.",
+      billingPreparingBody:
+        "Premium checkout is being prepared. You can review the benefits now, and plans will appear here as soon as billing is available.",
       billingReady: "SDK key configured",
       billingPending: "SDK key pending",
-      availablePlans: "Available Plans",
+      plansTitle: "Premium Plans",
+      availablePlans: "Choose Your Plan",
+      choosePlanHint: "Choose a plan that fits your daily practice.",
+      plansPendingBody: "Plan purchases will appear here once in-app purchases are enabled for this app.",
+      planStatusReady: "Secure in-app billing is ready on this device.",
+      planStatusPending: "Plan checkout is still being connected on this device.",
       loadingPlans: "Loading plans...",
       noPlansAvailable: "No active plans are available yet. Check your RevenueCat offerings setup.",
+      plansUnavailable: "Plans are not available right now. Please try again soon.",
       purchaseCta: "Choose Plan",
+      refreshCta: "Refresh Plan Status",
+      checkAccessCta: "Check Access",
       restoreCta: "Restore Purchases",
       processing: "Processing...",
       purchaseSuccessTitle: "Premium unlocked",
-      purchaseSuccessBody: "Your BhaktiVerse Premium access has been activated successfully.",
+      purchaseSuccessBody: "BhaktiVerse Premium is now active on this account.",
       purchaseCanceledTitle: "Purchase canceled",
       purchaseCanceledBody: "No changes were made to your subscription.",
       purchaseErrorTitle: "Purchase could not be completed",
+      purchasePendingBody:
+        "Your purchase completed, but premium access is still syncing. Please try Restore Purchases once.",
+      signInRequiredTitle: "Sign in required",
+      signInRequiredBody:
+        "Please sign in with your email account before purchasing Premium so your access and personal features can be saved securely.",
       restoreSuccessTitle: "Purchases restored",
-      restoreSuccessBody: "Your existing BhaktiVerse purchases have been restored successfully.",
+      restoreSuccessBody: "Your BhaktiVerse Premium purchases have been restored.",
       restoreErrorTitle: "Nothing to restore",
-      exploreCta: "Stay Tuned for Premium",
-      activeCta: "Premium Active",
+      restorePendingBody:
+        "We could not confirm a premium entitlement yet. Please wait a moment and try restoring again.",
+      exploreCta: "View Premium Benefits",
+      activeCta: "Premium is Active",
     },
     notebook: {
       title: "Private Shloka Notebook",
@@ -272,6 +323,100 @@ const translations: Record<LanguageKey, TranslationTree> = {
         "Open the linked prayer to continue with chanting, recitation, or audio support during the pooja.",
       openLinkedPrayer: "Open Linked Prayer",
     },
+    sadhana: {
+      title: "Daily Sadhana",
+      subtitle: "A simple devotional rhythm shaped around your time, energy, and focus",
+      guestTitle: "Sign in to save your sadhana",
+      guestBody: "Daily Sadhana is personal. Sign in so your devotional plan stays with your account.",
+      lockedTitle: "Unlock premium daily sadhana",
+      lockedBody:
+        "Daily Sadhana is part of BhaktiVerse Premium, with saved preferences and a guided prayer flow you can revisit every day.",
+      settingsTitle: "Sadhana Settings",
+      settingsBody: "Adjust your daily devotional flow and BhaktiVerse will shape a plan around it.",
+      enabledTitle: "Daily sadhana plan",
+      enabledBody: "Turn this on to keep a saved, guided daily flow in your account.",
+      durationTitle: "Duration",
+      durationBody: "Choose a realistic amount of time so your routine stays consistent.",
+      focusTitle: "Focus",
+      focusBody: "Pick the devotional mood you want BhaktiVerse to emphasize in your plan.",
+      deityTitle: "Preferred deity",
+      deityBody: "Choose a deity focus or keep it open for a balanced devotional plan.",
+      anyDeity: "Any deity",
+      planTitle: "Today's Suggested Flow",
+      planBody: "A simple sequence you can follow right away. Open any prayer to continue reading in full.",
+      startTitle: "Centering",
+      startBody: "Take a quiet breath, set your intention, and begin with gratitude.",
+      endTitle: "Closing",
+      endBody: "Offer a short moment of thanks and carry the calm into the rest of your day.",
+      totalTime: "Total Time",
+      noPlanTitle: "No plan available yet",
+      noPlanBody: "Try changing your focus or deity preference and BhaktiVerse will rebuild the flow.",
+      progressTitle: "Practice Progress",
+      streakBody: "Your current devotional streak",
+      streakDays: "days",
+      todayStatusTitle: "Today's Status",
+      todayStatusBody: "Mark today's sadhana when you've completed the flow.",
+      todayCompleted: "Completed",
+      todayPending: "Not completed yet",
+      completeCta: "Mark Today's Sadhana Complete",
+      savingProgress: "Saving Progress...",
+      completeSuccessBody: "Today's sadhana has been marked complete.",
+      focusBalanced: "Balanced",
+      focusCalm: "Calm",
+      focusStrength: "Strength",
+      focusProsperity: "Prosperity",
+      focusDevotion: "Devotion",
+    },
+    familyLearning: {
+      title: "Kids & Family Learning",
+      subtitle: "A short guided devotional learning moment for children, parents, and shared family practice",
+      guestTitle: "Sign in to save family learning",
+      guestBody: "Sign in with your family account so BhaktiVerse can save your learning preferences and keep family practice in sync.",
+      lockedTitle: "Unlock premium family learning",
+      lockedBody:
+        "Kids & Family Learning is part of BhaktiVerse Premium, with age-friendly prompts, meaning support, and repeat-together practice.",
+      settingsTitle: "Family Learning Settings",
+      settingsBody: "Adjust the age group, lesson style, and deity focus and BhaktiVerse will shape a short family-friendly flow.",
+      enabledTitle: "Family learning plan",
+      enabledBody: "Turn this on to keep a saved, guided family-learning rhythm in your account.",
+      ageGroupTitle: "Age group",
+      ageGroupBody: "Pick the age range you want the lesson tone and prompts to support.",
+      modeTitle: "Learning mode",
+      modeBody: "Choose how you want the prayer to be introduced and practiced together.",
+      deityTitle: "Preferred deity",
+      deityBody: "Choose a deity focus or keep it open for a balanced family devotional plan.",
+      anyDeity: "Any deity",
+      planTitle: "Today's Family Flow",
+      planBody: "A simple sequence you can use together right away. Open any prayer card to continue reading in full.",
+      openingTitle: "Gather together",
+      openingBody: "Sit together, take one quiet breath, and ask everyone to listen for one beautiful idea in the prayer.",
+      closingTitle: "Family reflection",
+      closingBody: "End by asking each person which word, feeling, or image they want to remember from today's prayer.",
+      totalTime: "Total Time",
+      noPlanBody: "Try another deity focus or age group and BhaktiVerse will rebuild the family flow.",
+      progressTitle: "Family Progress",
+      streakBody: "Your current family learning streak",
+      streakDays: "days",
+      todayStatusTitle: "Today's Status",
+      todayStatusBody: "Mark today's family learning moment when you've completed it together.",
+      todayCompleted: "Completed",
+      todayPending: "Not completed yet",
+      completeCta: "Mark Today's Family Learning Complete",
+      savingProgress: "Saving Progress...",
+      completeSuccessBody: "Today's family learning session has been marked complete.",
+      ageGroup46: "Age 4-6",
+      ageGroup710: "Age 7-10",
+      ageGroup1114: "Age 11-14",
+      ageGroupFamily: "All ages",
+      modeMeaning: "Meaning first",
+      modeRepeat: "Repeat together",
+      modeStory: "Story connection",
+      modeChant: "Chant together",
+      promptMeaning: "Share one simple meaning before you begin.",
+      promptRepeat: "Say one short line and invite everyone to repeat it together.",
+      promptStory: "Link the prayer to a short deity or festival story the family already knows.",
+      promptChant: "Keep a gentle rhythm and chant together a few times.",
+    },
     favorites: {
       title: "Favorites",
       subtitle: "Keep your most-loved prayers ready for daily devotion",
@@ -287,6 +432,9 @@ const translations: Record<LanguageKey, TranslationTree> = {
     common: {
       goodEvening: "शुभ संध्या",
       seeAll: "सभी देखें",
+      premium: "प्रीमियम",
+      unlockPremium: "प्रीमियम अनलॉक करें",
+      signInToContinue: "आगे बढ़ने के लिए साइन इन करें",
       prayers: "प्रार्थनाएँ",
       quickSelect: "त्वरित चयन",
       searchPath: "खोज का तरीका",
@@ -312,6 +460,21 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browseByFestival: "त्योहार अनुसार",
       browseByDeity: "देवता अनुसार",
       featuredPrayers: "विशेष प्रार्थनाएँ",
+      premiumGuidesTitle: "मार्गदर्शित त्योहार पूजा अनलॉक करें",
+      premiumGuidesBody: "प्रीमियम BhaktiVerse को केवल प्रार्थना पाठक नहीं, बल्कि एक सुव्यवस्थित भक्ति साथी बनाता है।",
+      premiumGuidesPoint1: "सामग्री, क्रम और ऑडियो फॉलो-अलॉन्ग के साथ त्योहार पूजा मार्गदर्शिकाएँ",
+      premiumGuidesPoint2: "व्यस्त दिनचर्या के लिए व्यक्तिगत दैनिक साधना योजना",
+      sadhanaTitle: "अपनी दैनिक साधना योजना खोलें",
+      sadhanaBody: "अपने समय, ध्यान और आराध्य देवता के अनुसार छोटा भक्ति क्रम बनाएं।",
+      sadhanaPoint1: "10, 15 या 20 मिनट का क्रम चुनें",
+      sadhanaPoint2: "ऐसी सरल प्रार्थना श्रृंखला पाएं जिसे आप वास्तव में निभा सकें",
+      sadhanaCta: "दैनिक साधना खोलें",
+      familyTitle: "परिवार के साथ सीखने का समय शुरू करें",
+      familyBody: "एक प्रार्थना को अर्थ, पुनरावृत्ति और आयु-अनुकूल संकेतों के साथ पारिवारिक अभ्यास बनाएं।",
+      familyPoint1: "आयु समूह और सीखने की शैली चुनें",
+      familyPoint2: "बच्चों और माता-पिता के लिए छोटा मार्गदर्शित क्रम पाएं",
+      familyCta: "परिवार शिक्षण खोलें",
+      thisMonth: "इस महीने",
       mantraLine: "ॐ नमः शिवाय",
     },
     search: {
@@ -324,6 +487,11 @@ const translations: Record<LanguageKey, TranslationTree> = {
       placeholderFestival: "त्योहार का नाम खोजें",
       placeholderDeity: "देवता का नाम खोजें",
       results: "परिणाम",
+      festivalResults: "त्योहार परिणाम",
+      deityResults: "देवता परिणाम",
+      relatedPrayers: "संबंधित प्रार्थनाएँ",
+      tapFestivalToBrowse: "संबंधित प्रार्थनाएँ और मार्गदर्शिका देखने के लिए किसी त्योहार पर टैप करें।",
+      tapDeityToBrowse: "संबंधित प्रार्थनाएँ देखने के लिए किसी देवता पर टैप करें।",
       noResults: "कोई प्रार्थना नहीं मिली",
       noResultsBody: "दूसरा खोज तरीका चुनें या अधिक सामग्री देखने के लिए फ़िल्टर हटाएँ।",
     },
@@ -338,6 +506,13 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browserPreview: "अभी के लिए ब्राउज़र वॉइस प्रीव्यू",
       tapToListen: "सुनने के लिए टैप करें",
       audioPrayer: "ऑडियो प्रार्थना",
+      pauseAudio: "ऑडियो रोकें",
+      languageLabel: "भाषा",
+      nowPlaying: "अभी चल रहा है",
+      lockedTitle: "पूरी ऑडियो लाइब्रेरी अनलॉक करें",
+      lockedBody: "मुफ़्त उपयोग में साप्ताहिक प्रार्थना सेट मिलता है। प्रीमियम में बढ़ती ऑडियो लाइब्रेरी, मार्गदर्शित पैक और भविष्य का ऑफ़लाइन सुनना शामिल होगा।",
+      teaserBody: "प्रीमियम ऑडियो में बढ़ती लाइब्रेरी, मार्गदर्शित सुनने के पैक और जैसे-जैसे ट्रैक बढ़ेंगे बेहतर प्लेबैक सुविधाएँ शामिल होंगी।",
+      explorePremium: "प्रीमियम देखें",
     },
     reminders: {
       title: "प्रार्थना रिमाइंडर",
@@ -359,6 +534,16 @@ const translations: Record<LanguageKey, TranslationTree> = {
       transliterated: "English में",
       textSize: "पाठ आकार",
       shareMessage: "इस प्रार्थना को BhaktiVerse पर पढ़ें",
+      featuredPrayer: "विशेष प्रार्थना",
+      devotionalPrayer: "भक्ति प्रार्थना",
+      eveningPrayer: "सायं प्रार्थना",
+      lockedPrayerTitle: "यह प्रार्थना प्रीमियम का हिस्सा है",
+      lockedPrayerBody: "आप अभी भी ऐप में प्रीमियम प्रार्थनाएँ देख सकते हैं, लेकिन पूरा पढ़ने का प्रवेश BhaktiVerse प्रीमियम के साथ खुलता है।",
+      premiumMeaningTitle: "सिर्फ प्रार्थना पढ़ने से आगे बढ़ें",
+      premiumMeaningBody: "प्रीमियम प्रत्येक प्रार्थना के साथ सीखने की परत जोड़ता है ताकि उपयोगकर्ता समझ सकें कि इसे कब, क्यों और कैसे पढ़ें।",
+      premiumMeaningPoint1: "पंक्ति-दर-पंक्ति अर्थ और भक्ति संदर्भ",
+      premiumMeaningPoint2: "उच्चारण मार्गदर्शन और अभ्यास सहायता",
+      premiumMeaningPoint3: "कब जपें और दैनिक दिनचर्या में कैसे शामिल करें",
     },
     profile: {
       title: "प्रोफाइल",
@@ -374,7 +559,57 @@ const translations: Record<LanguageKey, TranslationTree> = {
       appLanguageBody: "यह ऐप UI, लेबल और पूरे अनुभव को नियंत्रित करता है।",
       prayerSourceLanguage: "प्रार्थना स्रोत भाषा",
       prayerSourceBody: "English मोड में ऐप English में रहेगा लेकिन प्रार्थनाएँ आपकी चुनी भाषा से आएँगी।",
+      membership: "BhaktiVerse प्रीमियम",
+      membershipBody: "मुख्य भक्ति अनुभव को निःशुल्क रखें, जबकि प्रीमियम मार्गदर्शित पूजा, बेहतर ऑडियो और व्यक्तिगत आध्यात्मिक सहायता खोलता है।",
+      viewPremium: "प्रीमियम देखें",
+      notebook: "निजी श्लोक नोटबुक",
+      notebookBody: "अपनी दैनिक श्लोक रचनाएँ निजी रूप से लिखें और फिर कभी भी देखें।",
+      openNotebook: "नोटबुक खोलें",
+      sadhana: "दैनिक साधना",
+      sadhanaBody: "अपने समय, ध्यान और आराध्य देवता के अनुसार छोटा दोहराने योग्य भक्ति क्रम बनाएं।",
+      openSadhana: "दैनिक साधना खोलें",
+      familyLearning: "बच्चे और परिवार शिक्षण",
+      familyLearningBody: "बच्चों और परिवारों के लिए अर्थ, पुनरावृत्ति और साझा अभ्यास के साथ छोटी भक्ति सत्रों का मार्गदर्शन करें।",
+      openFamilyLearning: "परिवार शिक्षण खोलें",
       session: "सेशन",
+    },
+    premium: {
+      title: "BhaktiVerse प्रीमियम",
+      subtitle: "हर दिन अभ्यास का अधिक शांत और मार्गदर्शित तरीका",
+      currentPlan: "वर्तमान योजना",
+      freePlan: "मुफ्त",
+      premiumIndividual: "प्रीमियम व्यक्तिगत",
+      premiumFamily: "प्रीमियम परिवार",
+      status: "स्थिति",
+      active: "सक्रिय",
+      inactive: "निष्क्रिय",
+      trial: "परीक्षण",
+      gracePeriod: "ग्रेस अवधि",
+      validUntil: "मान्य तिथि",
+      compareFree: "क्या शामिल है",
+      whyUpgrade: "प्रीमियम में शामिल",
+      freeLine1: "प्रार्थना पढ़ना, खोज, पसंदीदा और दैनिक रिमाइंडर",
+      freeLine2: "मुख्य ऑडियो पहुँच और देवताओं व त्योहारों के अनुसार भक्ति ब्राउज़िंग",
+      premiumLine1: "मार्गदर्शित त्योहार पूजा, पूर्ण ऑडियो पहुँच और बेहतर दिनचर्या",
+      premiumLine2: "निजी पाठ, परिवार शिक्षण और अधिक व्यक्तिगत भक्ति प्रवाह",
+      featureFestivalGuides: "सामग्री सूची और चरण-दर-चरण त्योहार मार्गदर्शिकाएँ",
+      featureAudio: "बेहतर प्लेबैक के साथ पूर्ण ऑडियो लाइब्रेरी",
+      featureSadhana: "स्मार्ट रिमाइंडर योजनाएँ और दैनिक साधना मार्गदर्शन",
+      featureKids: "अर्थ और अभ्यास सहायता के साथ बच्चों और परिवार शिक्षण",
+      featureNotebook: "व्यक्तिगत पाठ के लिए निजी श्लोक नोटबुक",
+      featureVoice: "अपना पाठ रिकॉर्ड करें और फिर सुनें",
+      freeBody: "आप अभी मुफ्त योजना पर हैं।",
+      premiumBody: "इस खाते पर प्रीमियम पहुँच सक्रिय है।",
+      familyBody: "इस खाते पर परिवार प्रीमियम पहुँच सक्रिय है।",
+      plansTitle: "प्रीमियम योजनाएँ",
+      availablePlans: "अपनी योजना चुनें",
+      billingReadyBody: "BhaktiVerse में प्रीमियम अनलॉक करने के लिए योजना चुनें।",
+      billingPreparingBody: "प्रीमियम चेकआउट तैयार किया जा रहा है। अभी आप लाभ देख सकते हैं, और बिलिंग उपलब्ध होते ही योजनाएँ यहाँ दिखाई देंगी।",
+      choosePlanHint: "अपनी दैनिक साधना के लिए उपयुक्त योजना चुनें।",
+      plansPendingBody: "इन-ऐप खरीदारी सक्षम होने पर योजनाएँ यहाँ दिखाई देंगी।",
+      plansUnavailable: "अभी योजनाएँ उपलब्ध नहीं हैं। कृपया थोड़ी देर बाद फिर प्रयास करें।",
+      refreshCta: "योजना स्थिति रीफ़्रेश करें",
+      checkAccessCta: "पहुँच जाँचें",
     },
     favorites: {
       title: "पसंदीदा",
@@ -389,6 +624,9 @@ const translations: Record<LanguageKey, TranslationTree> = {
     common: {
       goodEvening: "శుభ సాయంత్రం",
       seeAll: "అన్నీ చూడండి",
+      premium: "ప్రీమియం",
+      unlockPremium: "ప్రీమియం అన్‌లాక్ చేయండి",
+      signInToContinue: "కొనసాగడానికి సైన్ ఇన్ చేయండి",
       prayers: "ప్రార్థనలు",
       quickSelect: "త్వరిత ఎంపిక",
       searchPath: "వెతుకు విధానం",
@@ -414,6 +652,21 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browseByFestival: "పండుగల ద్వారా",
       browseByDeity: "దైవం ద్వారా",
       featuredPrayers: "ప్రత్యేక ప్రార్థనలు",
+      premiumGuidesTitle: "మార్గదర్శక పండుగ పూజను అన్‌లాక్ చేయండి",
+      premiumGuidesBody: "ప్రీమియం BhaktiVerse ను కేవలం ప్రార్థన రీడర్ కాకుండా, ఒక క్రమబద్ధమైన భక్తి సహచరంగా మార్చుతుంది.",
+      premiumGuidesPoint1: "సామగ్రి, దశలు, ఆడియో ఫాలో-అలాంగ్‌తో పండుగ పూజ మార్గదర్శకాలు",
+      premiumGuidesPoint2: "బిజీ జీవనశైలికి వ్యక్తిగత దైనందిన సాధన ప్రణాళికలు",
+      sadhanaTitle: "మీ దైనందిన సాధన ప్రణాళికను తెరవండి",
+      sadhanaBody: "మీ సమయం, ధ్యాస మరియు ఇష్టదైవం ఆధారంగా చిన్న భక్తి పద్ధతిని రూపొందించండి.",
+      sadhanaPoint1: "10, 15 లేదా 20 నిమిషాల ప్రవాహాన్ని ఎంచుకోండి",
+      sadhanaPoint2: "మీరు నిజంగా అనుసరించగల సరళ ప్రార్థనా క్రమాన్ని పొందండి",
+      sadhanaCta: "దైనందిన సాధన తెరవండి",
+      familyTitle: "కుటుంబ అభ్యాస సమయాన్ని ప్రారంభించండి",
+      familyBody: "ఒక ప్రార్థనను అర్థం, పునరావృతం మరియు వయస్సుకు తగిన సూచనలతో కుటుంబ సాధనగా మార్చండి.",
+      familyPoint1: "వయస్సు గుంపు మరియు అభ్యాస శైలిని ఎంచుకోండి",
+      familyPoint2: "పిల్లలు, తల్లిదండ్రులు కలిసి చేయగల చిన్న మార్గదర్శక ప్రవాహాన్ని పొందండి",
+      familyCta: "కుటుంబ అభ్యాసం తెరవండి",
+      thisMonth: "ఈ నెల",
       mantraLine: "ఓం నమః శివాయ",
     },
     search: {
@@ -426,6 +679,11 @@ const translations: Record<LanguageKey, TranslationTree> = {
       placeholderFestival: "పండుగ పేరు వెతకండి",
       placeholderDeity: "దైవం పేరు వెతకండి",
       results: "ఫలితాలు",
+      festivalResults: "పండుగ ఫలితాలు",
+      deityResults: "దైవ ఫలితాలు",
+      relatedPrayers: "సంబంధిత ప్రార్థనలు",
+      tapFestivalToBrowse: "సంబంధిత ప్రార్థనలు మరియు మార్గదర్శకాలను చూడటానికి పండుగపై ట్యాప్ చేయండి.",
+      tapDeityToBrowse: "సంబంధిత ప్రార్థనలు చూడటానికి దైవంపై ట్యాప్ చేయండి.",
       noResults: "ప్రార్థనలు దొరకలేదు",
       noResultsBody: "మరొక వెతుకు మార్గం ఎంచుకోండి లేదా మరిన్ని ప్రార్థనలు చూడటానికి ఫిల్టర్ తీసేయండి.",
     },
@@ -440,6 +698,13 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browserPreview: "ప్రస్తుతం బ్రౌజర్ వాయిస్ ప్రివ్యూ మాత్రమే",
       tapToListen: "వినడానికి ట్యాప్ చేయండి",
       audioPrayer: "ఆడియో ప్రార్థన",
+      pauseAudio: "ఆడియో నిలిపివేయండి",
+      languageLabel: "భాష",
+      nowPlaying: "ఇప్పుడు ప్లే అవుతోంది",
+      lockedTitle: "పూర్తి ఆడియో లైబ్రరీని అన్‌లాక్ చేయండి",
+      lockedBody: "ఉచిత ప్రాప్తిలో వారాంత ప్రార్థనా సమూహం ఉంటుంది. ప్రీమియంలో పెరుగుతున్న ఆడియో లైబ్రరీ, మార్గదర్శిత ప్యాక్‌లు మరియు భవిష్యత్తులో ఆఫ్‌లైన్ వినికిడి ఉంటాయి.",
+      teaserBody: "ప్రీమియం ఆడియోలో పెరుగుతున్న లైబ్రరీ, మార్గదర్శిత వినికిడి ప్యాక్‌లు మరియు మరిన్ని ట్రాక్‌లు జోడించబడే కొద్దీ మెరుగైన ప్లేబ్యాక్ ఫీచర్లు ఉంటాయి.",
+      explorePremium: "ప్రీమియాన్ని చూడండి",
     },
     reminders: {
       title: "ప్రార్థన రిమైండర్లు",
@@ -461,6 +726,16 @@ const translations: Record<LanguageKey, TranslationTree> = {
       transliterated: "English లో",
       textSize: "పాఠ పరిమాణం",
       shareMessage: "ఈ ప్రార్థనను BhaktiVerse లో చదవండి",
+      featuredPrayer: "ప్రత్యేక ప్రార్థన",
+      devotionalPrayer: "భక్తి ప్రార్థన",
+      eveningPrayer: "సాయంత్ర ప్రార్థన",
+      lockedPrayerTitle: "ఈ ప్రార్థన ప్రీమియంలో భాగం",
+      lockedPrayerBody: "యాప్‌లో మీరు ఇంకా ప్రీమియం ప్రార్థనలను కనుగొనవచ్చు, కానీ పూర్తి పఠన ప్రాప్తి BhaktiVerse ప్రీమియంతో అన్‌లాక్ అవుతుంది.",
+      premiumMeaningTitle: "ప్రార్థన చదవడాన్ని మించి వెళ్లండి",
+      premiumMeaningBody: "ప్రతి ప్రార్థన చుట్టూ ప్రీమియం ఒక అభ్యాస పొరను జోడిస్తుంది, తద్వారా దీన్ని ఎప్పుడు, ఎందుకు, ఎలా చదవాలో వినియోగదారులు అర్థం చేసుకుంటారు.",
+      premiumMeaningPoint1: "లైన్-బై-లైన్ అర్థం మరియు భక్తి సందర్భం",
+      premiumMeaningPoint2: "ఉచ్చారణ మార్గదర్శకం మరియు సాధన సహాయం",
+      premiumMeaningPoint3: "ఎప్పుడు జపించాలి, దైనందిన పద్ధతిలో ఎలా చేర్చాలి",
     },
     profile: {
       title: "ప్రొఫైల్",
@@ -476,7 +751,57 @@ const translations: Record<LanguageKey, TranslationTree> = {
       appLanguageBody: "ఇది యాప్ UI, లేబుళ్లు మరియు మొత్తం అనుభవాన్ని నియంత్రిస్తుంది.",
       prayerSourceLanguage: "ప్రార్థన మూల భాష",
       prayerSourceBody: "English మోడ్‌లో యాప్ English లో ఉంటుంది కానీ ప్రార్థనలు మీరు ఎంచుకున్న భాష నుంచి వస్తాయి.",
+      membership: "BhaktiVerse ప్రీమియం",
+      membershipBody: "మూల భక్తి అనుభవాన్ని ఉచితంగా ఉంచి, ప్రీమియం మార్గదర్శక కర్మలు, మెరుగైన ఆడియో మరియు వ్యక్తిగత ఆధ్యాత్మిక సహాయాన్ని అన్‌లాక్ చేస్తుంది.",
+      viewPremium: "ప్రీమియం చూడండి",
+      notebook: "వ్యక్తిగత శ్లోక నోటుబుక్",
+      notebookBody: "మీ దైనందిన శ్లోక పఠనాలను వ్యక్తిగతంగా రాసి మళ్లీ చూడండి.",
+      openNotebook: "నోటుబుక్ తెరవండి",
+      sadhana: "దైనందిన సాధన",
+      sadhanaBody: "మీ సమయం, ధ్యాస, ఇష్టదైవం ఆధారంగా చిన్న పునరావృత భక్తి ప్రణాళికను రూపొందించండి.",
+      openSadhana: "దైనందిన సాధన తెరవండి",
+      familyLearning: "పిల్లలు మరియు కుటుంబ అభ్యాసం",
+      familyLearningBody: "పిల్లలు, కుటుంబాలకు అర్థం, పునరావృతం, మృదువైన సహచర సాధనతో చిన్న భక్తి సెషన్లను అందించండి.",
+      openFamilyLearning: "కుటుంబ అభ్యాసం తెరవండి",
       session: "సెషన్",
+    },
+    premium: {
+      title: "BhaktiVerse ప్రీమియం",
+      subtitle: "ప్రతిరోజూ మరింత ప్రశాంతంగా, మార్గదర్శకంగా సాధన చేయడానికి ఒక మార్గం",
+      currentPlan: "ప్రస్తుత ప్రణాళిక",
+      freePlan: "ఉచితం",
+      premiumIndividual: "ప్రీమియం వ్యక్తిగతం",
+      premiumFamily: "ప్రీమియం కుటుంబం",
+      status: "స్థితి",
+      active: "సక్రియం",
+      inactive: "నిష్క్రియం",
+      trial: "ట్రయల్",
+      gracePeriod: "గ్రేస్ పీరియడ్",
+      validUntil: "చెల్లుబాటు అయ్యే వరకు",
+      compareFree: "ఇందులో ఉన్నవి",
+      whyUpgrade: "ప్రీమియంలో ఉన్నవి",
+      freeLine1: "ప్రార్థన చదవడం, శోధన, ఇష్టమైనవి, దైనందిన రిమైండర్లు",
+      freeLine2: "మూల ఆడియో యాక్సెస్ మరియు దైవాలు, పండుగలపై భక్తి బ్రౌజింగ్",
+      premiumLine1: "మార్గదర్శక పండుగ పూజ, పూర్తి ఆడియో యాక్సెస్ మరియు మెరుగైన పద్ధతులు",
+      premiumLine2: "వ్యక్తిగత పఠనాలు, కుటుంబ అభ్యాసం మరియు మరింత వ్యక్తిగత భక్తి ప్రవాహం",
+      featureFestivalGuides: "సామగ్రి జాబితా మరియు దశలవారీ పండుగ మార్గదర్శకాలు",
+      featureAudio: "మెరుగైన ప్లేబ్యాక్‌తో పూర్తి ఆడియో లైబ్రరీ",
+      featureSadhana: "స్మార్ట్ రిమైండర్ ప్రణాళికలు మరియు దైనందిన సాధన మార్గదర్శనం",
+      featureKids: "అర్థం, సాధన సహాయంతో పిల్లలు మరియు కుటుంబ అభ్యాసం",
+      featureNotebook: "వ్యక్తిగత పఠనాల కోసం వ్యక్తిగత శ్లోక నోటుబుక్",
+      featureVoice: "మీ స్వంత పఠనాన్ని రికార్డ్ చేసి మళ్లీ వినండి",
+      freeBody: "మీరు ప్రస్తుతం ఉచిత ప్రణాళికలో ఉన్నారు.",
+      premiumBody: "ఈ ఖాతాలో ప్రీమియం యాక్సెస్ సక్రియంగా ఉంది.",
+      familyBody: "ఈ ఖాతాలో కుటుంబ ప్రీమియం యాక్సెస్ సక్రియంగా ఉంది.",
+      plansTitle: "ప్రీమియం ప్రణాళికలు",
+      availablePlans: "మీ ప్రణాళికను ఎంచుకోండి",
+      billingReadyBody: "BhaktiVerse అంతటా ప్రీమియంను అన్‌లాక్ చేయడానికి ప్రణాళికను ఎంచుకోండి.",
+      billingPreparingBody: "ప్రీమియం చెకౌట్ సిద్ధమవుతోంది. ప్రస్తుతం మీరు ప్రయోజనాలను చూడవచ్చు, బిల్లింగ్ అందుబాటులోకి రాగానే ప్రణాళికలు ఇక్కడ కనిపిస్తాయి.",
+      choosePlanHint: "మీ దైనందిన సాధనకు సరిపోయే ప్రణాళికను ఎంచుకోండి.",
+      plansPendingBody: "ఈ యాప్‌లో ఇన్-యాప్ కొనుగోళ్లు ప్రారంభమైన వెంటనే ప్రణాళికలు ఇక్కడ కనిపిస్తాయి.",
+      plansUnavailable: "ప్రస్తుతం ప్రణాళికలు అందుబాటులో లేవు. దయచేసి కొంతసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.",
+      refreshCta: "ప్రణాళిక స్థితిని రిఫ్రెష్ చేయండి",
+      checkAccessCta: "యాక్సెస్ తనిఖీ చేయండి",
     },
     favorites: {
       title: "ఇష్టమైనవి",
@@ -491,6 +816,9 @@ const translations: Record<LanguageKey, TranslationTree> = {
     common: {
       goodEvening: "ಶುಭ ಸಂಜೆ",
       seeAll: "ಎಲ್ಲವನ್ನೂ ನೋಡಿ",
+      premium: "ಪ್ರೀಮಿಯಂ",
+      unlockPremium: "ಪ್ರೀಮಿಯಂ ಅನ್ಲಾಕ್ ಮಾಡಿ",
+      signInToContinue: "ಮುಂದುವರೆಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ",
       prayers: "ಪ್ರಾರ್ಥನೆಗಳು",
       quickSelect: "ತ್ವರಿತ ಆಯ್ಕೆ",
       searchPath: "ಹುಡುಕುವ ಮಾರ್ಗ",
@@ -516,6 +844,21 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browseByFestival: "ಹಬ್ಬದ ಪ್ರಕಾರ",
       browseByDeity: "ದೇವತೆ ಪ್ರಕಾರ",
       featuredPrayers: "ಪ್ರಮುಖ ಪ್ರಾರ್ಥನೆಗಳು",
+      premiumGuidesTitle: "ಮಾರ್ಗದರ್ಶಿತ ಹಬ್ಬದ ಪೂಜೆಯನ್ನು ಅನ್ಲಾಕ್ ಮಾಡಿ",
+      premiumGuidesBody: "ಪ್ರೀಮಿಯಂ BhaktiVerse ಅನ್ನು ಕೇವಲ ಪ್ರಾರ್ಥನಾ ಓದುಗರಿಂದ ಕ್ರಮಬದ್ಧ ಭಕ್ತಿ ಸಹಚರನಾಗಿ ಮಾಡುತ್ತದೆ.",
+      premiumGuidesPoint1: "ಸಾಮಗ್ರಿ, ಹಂತಗಳು ಮತ್ತು ಆಡಿಯೋ ಸಹಿತ ಹಬ್ಬದ ಪೂಜೆ ಮಾರ್ಗದರ್ಶಿಗಳು",
+      premiumGuidesPoint2: "ವ್ಯಸ್ತ ದಿನಚರಿಗಾಗಿ ವೈಯಕ್ತಿಕ ದೈನಂದಿನ ಸಾಧನಾ ಯೋಜನೆಗಳು",
+      sadhanaTitle: "ನಿಮ್ಮ ದೈನಂದಿನ ಸಾಧನಾ ಯೋಜನೆಯನ್ನು ತೆರೆಯಿರಿ",
+      sadhanaBody: "ನಿಮ್ಮ ಸಮಯ, ಗಮನ ಮತ್ತು ಇಷ್ಟದ ದೇವತೆಗೆ ತಕ್ಕ ಭಕ್ತಿ ಕ್ರಮವನ್ನು ರೂಪಿಸಿ.",
+      sadhanaPoint1: "10, 15 ಅಥವಾ 20 ನಿಮಿಷಗಳ ಕ್ರಮವನ್ನು ಆರಿಸಿ",
+      sadhanaPoint2: "ನೀವು ನಿಜವಾಗಿಯೂ ಅನುಸರಿಸಬಹುದಾದ ಸರಳ ಪ್ರಾರ್ಥನಾ ಕ್ರಮವನ್ನು ಪಡೆಯಿರಿ",
+      sadhanaCta: "ದೈನಂದಿನ ಸಾಧನೆಯನ್ನು ತೆರೆಯಿರಿ",
+      familyTitle: "ಕುಟುಂಬದ ಕಲಿಕೆಯ ಕ್ಷಣವನ್ನು ಆರಂಭಿಸಿ",
+      familyBody: "ಒಂದು ಪ್ರಾರ್ಥನೆಯನ್ನು ಅರ್ಥ, ಪುನರಾವರ್ತಿ ಮತ್ತು ವಯಸ್ಸಿಗೆ ತಕ್ಕ ಸೂಚನೆಗಳೊಂದಿಗೆ ಕುಟುಂಬದ ಅಭ್ಯಾಸವನ್ನಾಗಿ ಮಾಡಿ.",
+      familyPoint1: "ವಯೋವರ್ಗ ಮತ್ತು ಕಲಿಕೆ ಶೈಲಿಯನ್ನು ಆರಿಸಿ",
+      familyPoint2: "ಮಕ್ಕಳು ಮತ್ತು ಪೋಷಕರು ಒಟ್ಟಿಗೆ ಮಾಡಲು ಚಿಕ್ಕ ಮಾರ್ಗದರ್ಶಿತ ಕ್ರಮವನ್ನು ಪಡೆಯಿರಿ",
+      familyCta: "ಕುಟುಂಬ ಕಲಿಕೆಯನ್ನು ತೆರೆಯಿರಿ",
+      thisMonth: "ಈ ತಿಂಗಳು",
       mantraLine: "ಓಂ ನಮಃ ಶಿವಾಯ",
     },
     search: {
@@ -528,6 +871,11 @@ const translations: Record<LanguageKey, TranslationTree> = {
       placeholderFestival: "ಹಬ್ಬದ ಹೆಸರನ್ನು ಹುಡುಕಿ",
       placeholderDeity: "ದೇವರ ಹೆಸರನ್ನು ಹುಡುಕಿ",
       results: "ಫಲಿತಾಂಶಗಳು",
+      festivalResults: "ಹಬ್ಬದ ಫಲಿತಾಂಶಗಳು",
+      deityResults: "ದೇವತೆ ಫಲಿತಾಂಶಗಳು",
+      relatedPrayers: "ಸಂಬಂಧಿತ ಪ್ರಾರ್ಥನೆಗಳು",
+      tapFestivalToBrowse: "ಸಂಬಂಧಿತ ಪ್ರಾರ್ಥನೆಗಳು ಮತ್ತು ಮಾರ್ಗದರ್ಶಿಗಳನ್ನು ನೋಡಲು ಹಬ್ಬದ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ.",
+      tapDeityToBrowse: "ಸಂಬಂಧಿತ ಪ್ರಾರ್ಥನೆಗಳನ್ನು ನೋಡಲು ದೇವರ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ.",
       noResults: "ಪ್ರಾರ್ಥನೆಗಳು ಸಿಗಲಿಲ್ಲ",
       noResultsBody: "ಇನ್ನೊಂದು ಹುಡುಕುವ ವಿಧಾನವನ್ನು ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ.",
     },
@@ -542,6 +890,13 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browserPreview: "ಈಗಕ್ಕೆ ಬ್ರೌಸರ್ ಧ್ವನಿ ಪೂರ್ವವೀಕ್ಷಣೆ",
       tapToListen: "ಕೇಳಲು ಟ್ಯಾಪ್ ಮಾಡಿ",
       audioPrayer: "ಆಡಿಯೋ ಪ್ರಾರ್ಥನೆ",
+      pauseAudio: "ಆಡಿಯೋ ವಿರಮಿಸಿ",
+      languageLabel: "ಭಾಷೆ",
+      nowPlaying: "ಈಗ ಪ್ಲೇ ಆಗುತ್ತಿದೆ",
+      lockedTitle: "ಪೂರ್ಣ ಆಡಿಯೋ ಲೈಬ್ರರಿಯನ್ನು ಅನ್ಲಾಕ್ ಮಾಡಿ",
+      lockedBody: "ಉಚಿತ ಪ್ರವೇಶದಲ್ಲಿ ವಾರದ ಪ್ರಾರ್ಥನಾ ಸಮೂಹ ಮಾತ್ರ ಇದೆ. ಪ್ರೀಮಿಯಂನಲ್ಲಿ ಬೆಳೆಯುತ್ತಿರುವ ಆಡಿಯೋ ಲೈಬ್ರರಿ, ಮಾರ್ಗದರ್ಶಿತ ಪ್ಯಾಕ್‌ಗಳು ಮತ್ತು ಭವಿಷ್ಯದ ಆಫ್‌ಲೈನ್ ಶ್ರವಣ ಇರುತ್ತದೆ.",
+      teaserBody: "ಪ್ರೀಮಿಯಂ ಆಡಿಯೋದಲ್ಲಿ ಬೆಳೆಯುತ್ತಿರುವ ಲೈಬ್ರರಿ, ಮಾರ್ಗದರ್ಶಿತ ಶ್ರವಣ ಪ್ಯಾಕ್‌ಗಳು ಮತ್ತು ಹೆಚ್ಚು ಟ್ರ್ಯಾಕ್‌ಗಳು ಸೇರಿದಂತೆ ಉತ್ತಮ ಪ್ಲೇಬ್ಯಾಕ್ ವೈಶಿಷ್ಟ್ಯಗಳು ಇರುತ್ತವೆ.",
+      explorePremium: "ಪ್ರೀಮಿಯಂ ನೋಡಿ",
     },
     reminders: {
       title: "ಪ್ರಾರ್ಥನಾ ಸ್ಮರಣೆಗಳು",
@@ -563,6 +918,16 @@ const translations: Record<LanguageKey, TranslationTree> = {
       transliterated: "English ನಲ್ಲಿ",
       textSize: "ಪಾಠ ಗಾತ್ರ",
       shareMessage: "ಈ ಪ್ರಾರ್ಥನೆಯನ್ನು BhaktiVerse ನಲ್ಲಿ ಓದಿ",
+      featuredPrayer: "ಪ್ರಮುಖ ಪ್ರಾರ್ಥನೆ",
+      devotionalPrayer: "ಭಕ್ತಿ ಪ್ರಾರ್ಥನೆ",
+      eveningPrayer: "ಸಂಜೆ ಪ್ರಾರ್ಥನೆ",
+      lockedPrayerTitle: "ಈ ಪ್ರಾರ್ಥನೆ ಪ್ರೀಮಿಯಂ ಭಾಗವಾಗಿದೆ",
+      lockedPrayerBody: "ಆ್ಯಪ್‌ನಲ್ಲಿ ನೀವು ಇನ್ನೂ ಪ್ರೀಮಿಯಂ ಪ್ರಾರ್ಥನೆಗಳನ್ನು ಕಂಡುಹಿಡಿಯಬಹುದು, ಆದರೆ ಸಂಪೂರ್ಣ ಓದುವ ಪ್ರವೇಶ BhaktiVerse ಪ್ರೀಮಿಯಂ ಮೂಲಕ ಅನ್ಲಾಕ್ ಆಗುತ್ತದೆ.",
+      premiumMeaningTitle: "ಪ್ರಾರ್ಥನೆಯನ್ನು ಓದುವುದಕ್ಕಿಂತ ಮುಂದೆ ಹೋಗಿ",
+      premiumMeaningBody: "ಪ್ರೀಮಿಯಂ ಪ್ರತಿಯೊಂದು ಪ್ರಾರ್ಥನೆಯ ಸುತ್ತ ಕಲಿಕೆಯ ಪದರವನ್ನು ಸೇರಿಸುತ್ತದೆ, ಇದರಿಂದ ಇದನ್ನು ಯಾವಾಗ, ಏಕೆ ಮತ್ತು ಹೇಗೆ ಪಠಿಸಬೇಕು ಎಂಬುದು ಬಳಕೆದಾರರಿಗೆ ಸ್ಪಷ್ಟವಾಗುತ್ತದೆ.",
+      premiumMeaningPoint1: "ಸಾಲು-ಸಾಲಿನ ಅರ್ಥ ಮತ್ತು ಭಕ್ತಿ ಸಂದರ್ಭ",
+      premiumMeaningPoint2: "ಉಚ್ಚಾರಣ ಮಾರ್ಗದರ್ಶನ ಮತ್ತು ಅಭ್ಯಾಸ ಬೆಂಬಲ",
+      premiumMeaningPoint3: "ಯಾವಾಗ ಜಪಿಸಬೇಕು ಮತ್ತು ದೈನಂದಿನ ಕ್ರಮದಲ್ಲಿ ಹೇಗೆ ಸೇರಿಸಬೇಕು",
     },
     profile: {
       title: "ಪ್ರೊಫೈಲ್",
@@ -578,7 +943,57 @@ const translations: Record<LanguageKey, TranslationTree> = {
       appLanguageBody: "ಇದು ಆಪ್ UI, ಲೇಬಲ್‌ಗಳು ಮತ್ತು ಒಟ್ಟು ಅನುಭವವನ್ನು ನಿಯಂತ್ರಿಸುತ್ತದೆ.",
       prayerSourceLanguage: "ಪ್ರಾರ್ಥನೆಯ ಮೂಲ ಭಾಷೆ",
       prayerSourceBody: "English ಮೋಡ್‌ನಲ್ಲಿ ಆಪ್ English ನಲ್ಲಿ ಇರುತ್ತದೆ ಆದರೆ ಪ್ರಾರ್ಥನೆಗಳು ನೀವು ಆರಿಸಿದ ಭಾಷೆಯಿಂದ ಬರುತ್ತವೆ.",
+      membership: "BhaktiVerse ಪ್ರೀಮಿಯಂ",
+      membershipBody: "ಮೂಲ ಭಕ್ತಿ ಅನುಭವವನ್ನು ಉಚಿತವಾಗಿರಿಸಿ, ಪ್ರೀಮಿಯಂ ಮಾರ್ಗದರ್ಶಿತ ವಿಧಿಗಳು, ಸಮೃದ್ಧ ಆಡಿಯೋ ಮತ್ತು ವೈಯಕ್ತಿಕ ಆಧ್ಯಾತ್ಮಿಕ ಸಹಾಯವನ್ನು ತೆರೆಯುತ್ತದೆ.",
+      viewPremium: "ಪ್ರೀಮಿಯಂ ನೋಡಿ",
+      notebook: "ಖಾಸಗಿ ಶ್ಲೋಕ ನೋಟ್‌ಬುಕ್",
+      notebookBody: "ನಿಮ್ಮ ದೈನಂದಿನ ಶ್ಲೋಕ ಪಠಣಗಳನ್ನು ಖಾಸಗಿಯಾಗಿ ಬರೆದು ಯಾವಾಗ ಬೇಕಾದರೂ ಮತ್ತೆ ನೋಡಿ.",
+      openNotebook: "ನೋಟ್‌ಬುಕ್ ತೆರೆಯಿರಿ",
+      sadhana: "ದೈನಂದಿನ ಸಾಧನೆ",
+      sadhanaBody: "ನಿಮ್ಮ ಸಮಯ, ಗಮನ ಮತ್ತು ಇಷ್ಟದ ದೇವತೆಗೆ ಅನುಗುಣವಾದ ಚಿಕ್ಕ ಪುನರಾವರ್ತಿತ ಭಕ್ತಿ ಯೋಜನೆಯನ್ನು ರೂಪಿಸಿ.",
+      openSadhana: "ದೈನಂದಿನ ಸಾಧನೆಯನ್ನು ತೆರೆಯಿರಿ",
+      familyLearning: "ಮಕ್ಕಳು ಮತ್ತು ಕುಟುಂಬ ಕಲಿಕೆ",
+      familyLearningBody: "ಮಕ್ಕಳು ಮತ್ತು ಕುಟುಂಬಗಳಿಗೆ ಅರ್ಥ, ಪುನರಾವರ್ತಿ ಮತ್ತು ಹಂಚಿದ ಅಭ್ಯಾಸದೊಂದಿಗೆ ಚಿಕ್ಕ ಭಕ್ತಿ ಅವಧಿಗಳನ್ನು ಮಾರ್ಗದರ್ಶನ ಮಾಡಿ.",
+      openFamilyLearning: "ಕುಟುಂಬ ಕಲಿಕೆಯನ್ನು ತೆರೆಯಿರಿ",
       session: "ಸೆಷನ್",
+    },
+    premium: {
+      title: "BhaktiVerse ಪ್ರೀಮಿಯಂ",
+      subtitle: "ಪ್ರತಿದಿನ ಅಭ್ಯಾಸಕ್ಕೆ ಇನ್ನಷ್ಟು ಶಾಂತ ಮತ್ತು ಮಾರ್ಗದರ್ಶಿತ ಮಾರ್ಗ",
+      currentPlan: "ಪ್ರಸ್ತುತ ಯೋಜನೆ",
+      freePlan: "ಉಚಿತ",
+      premiumIndividual: "ಪ್ರೀಮಿಯಂ ವೈಯಕ್ತಿಕ",
+      premiumFamily: "ಪ್ರೀಮಿಯಂ ಕುಟುಂಬ",
+      status: "ಸ್ಥಿತಿ",
+      active: "ಸಕ್ರಿಯ",
+      inactive: "ನಿಷ್ಕ್ರಿಯ",
+      trial: "ಪ್ರಾಯೋಗಿಕ",
+      gracePeriod: "ಗ್ರೇಸ್ ಅವಧಿ",
+      validUntil: "ಮಾನ್ಯ ದಿನಾಂಕ",
+      compareFree: "ಇದಲ್ಲಿರುವುದು",
+      whyUpgrade: "ಪ್ರೀಮಿಯಂ ಒಳಗೊಂಡಿರುವುದು",
+      freeLine1: "ಪ್ರಾರ್ಥನೆ ಓದು, ಹುಡುಕು, ಇಷ್ಟಗಳು ಮತ್ತು ದೈನಂದಿನ ಸ್ಮರಣೆಗಳು",
+      freeLine2: "ಮೂಲ ಆಡಿಯೋ ಪ್ರವೇಶ ಮತ್ತು ದೇವತೆ ಹಾಗೂ ಹಬ್ಬಗಳ ಮೂಲಕ ಭಕ್ತಿ ಬ್ರೌಸಿಂಗ್",
+      premiumLine1: "ಮಾರ್ಗದರ್ಶಿತ ಹಬ್ಬದ ಪೂಜೆ, ಸಂಪೂರ್ಣ ಆಡಿಯೋ ಪ್ರವೇಶ ಮತ್ತು ಉತ್ತಮ ದಿನಚರಿ",
+      premiumLine2: "ಖಾಸಗಿ ಪಠಣ, ಕುಟುಂಬ ಕಲಿಕೆ ಮತ್ತು ಹೆಚ್ಚು ವೈಯಕ್ತಿಕ ಭಕ್ತಿ ಪ್ರವಾಹ",
+      featureFestivalGuides: "ಸಾಮಗ್ರಿ ಪಟ್ಟಿ ಮತ್ತು ಹಂತ ಹಂತದ ಹಬ್ಬದ ಮಾರ್ಗದರ್ಶಿಗಳು",
+      featureAudio: "ಉತ್ತಮ ಪ್ಲೇಬ್ಯಾಕ್‌ನೊಂದಿಗೆ ಸಂಪೂರ್ಣ ಆಡಿಯೋ ಲೈಬ್ರರಿ",
+      featureSadhana: "ಸ್ಮಾರ್ಟ್ ಸ್ಮರಣೆ ಯೋಜನೆಗಳು ಮತ್ತು ದೈನಂದಿನ ಸಾಧನಾ ಮಾರ್ಗದರ್ಶನ",
+      featureKids: "ಅರ್ಥ ಮತ್ತು ಅಭ್ಯಾಸ ಬೆಂಬಲದೊಂದಿಗೆ ಮಕ್ಕಳ ಮತ್ತು ಕುಟುಂಬ ಕಲಿಕೆ",
+      featureNotebook: "ವೈಯಕ್ತಿಕ ಪಠಣಕ್ಕಾಗಿ ಖಾಸಗಿ ಶ್ಲೋಕ ನೋಟ್‌ಬುಕ್",
+      featureVoice: "ನಿಮ್ಮದೇ ಪಠಣವನ್ನು ದಾಖಲಿಸಿ ಮತ್ತೆ ಆಲಿಸಿ",
+      freeBody: "ನೀವು ಈಗ ಉಚಿತ ಯೋಜನೆಯಲ್ಲಿ ಇದ್ದೀರಿ.",
+      premiumBody: "ಈ ಖಾತೆಯಲ್ಲಿ ಪ್ರೀಮಿಯಂ ಪ್ರವೇಶ ಸಕ್ರಿಯವಾಗಿದೆ.",
+      familyBody: "ಈ ಖಾತೆಯಲ್ಲಿ ಕುಟುಂಬ ಪ್ರೀಮಿಯಂ ಪ್ರವೇಶ ಸಕ್ರಿಯವಾಗಿದೆ.",
+      plansTitle: "ಪ್ರೀಮಿಯಂ ಯೋಜನೆಗಳು",
+      availablePlans: "ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಆರಿಸಿ",
+      billingReadyBody: "BhaktiVerse ನಲ್ಲಿ ಪ್ರೀಮಿಯಂ ಅನ್ಲಾಕ್ ಮಾಡಲು ಯೋಜನೆಯನ್ನು ಆರಿಸಿ.",
+      billingPreparingBody: "ಪ್ರೀಮಿಯಂ ಚೆಕ್‌ಔಟ್ ಸಿದ್ಧಗೊಳ್ಳುತ್ತಿದೆ. ಈಗಲೇ ನೀವು ಲಾಭಗಳನ್ನು ನೋಡಬಹುದು, ಮತ್ತು ಬಿಲ್ಲಿಂಗ್ ಲಭ್ಯವಾದ ತಕ್ಷಣ ಯೋಜನೆಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.",
+      choosePlanHint: "ನಿಮ್ಮ ದೈನಂದಿನ ಸಾಧನೆಗೆ ಹೊಂದುವ ಯೋಜನೆಯನ್ನು ಆರಿಸಿ.",
+      plansPendingBody: "ಈ ಆಪ್‌ಗೆ ಇನ್-ಆಪ್ ಖರೀದಿಗಳು ಸಕ್ರಿಯವಾದ ನಂತರ ಯೋಜನೆಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.",
+      plansUnavailable: "ಈಗ ಯೋಜನೆಗಳು ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಹೊತ್ತಿನ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      refreshCta: "ಯೋಜನೆ ಸ್ಥಿತಿ ರಿಫ್ರೆಶ್ ಮಾಡಿ",
+      checkAccessCta: "ಪ್ರವೇಶ ಪರಿಶೀಲಿಸಿ",
     },
     favorites: {
       title: "ಇಷ್ಟಗಳು",
@@ -593,6 +1008,9 @@ const translations: Record<LanguageKey, TranslationTree> = {
     common: {
       goodEvening: "மாலை வணக்கம்",
       seeAll: "அனைத்தையும் காண்க",
+      premium: "பிரீமியம்",
+      unlockPremium: "பிரீமியத்தை திறக்கவும்",
+      signInToContinue: "தொடர உள்நுழைக",
       prayers: "பிரார்த்தனைகள்",
       quickSelect: "விரைவு தேர்வு",
       searchPath: "தேடல் வழி",
@@ -618,6 +1036,21 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browseByFestival: "திருவிழா மூலம்",
       browseByDeity: "தெய்வம் மூலம்",
       featuredPrayers: "சிறப்பு பிரார்த்தனைகள்",
+      premiumGuidesTitle: "வழிகாட்டும் திருவிழா பூஜையை திறக்கவும்",
+      premiumGuidesBody: "பிரீமியம் BhaktiVerse ஐ வெறும் பிரார்த்தனை வாசிப்பாளராக அல்ல, ஒழுங்கான பக்தி துணையாக மாற்றுகிறது.",
+      premiumGuidesPoint1: "பொருட்கள், படிகள் மற்றும் ஆடியோ உடன் திருவிழா பூஜை வழிகாட்டிகள்",
+      premiumGuidesPoint2: "பிஸியான அட்டவணைக்கு தனிப்பயன் தினசரி சாதன திட்டங்கள்",
+      sadhanaTitle: "உங்கள் தினசரி சாதன திட்டத்தைத் திறக்கவும்",
+      sadhanaBody: "உங்கள் நேரம், கவனம் மற்றும் விருப்ப தெய்வத்தைச் சுற்றி ஒரு சிறிய பக்தி ஓட்டத்தை அமைக்கவும்.",
+      sadhanaPoint1: "10, 15 அல்லது 20 நிமிட ஓட்டத்தைத் தேர்வு செய்யவும்",
+      sadhanaPoint2: "உண்மையில் நீங்கள் பின்பற்றக்கூடிய எளிய பிரார்த்தனை வரிசையைப் பெறுங்கள்",
+      sadhanaCta: "தினசரி சாதனத்தைத் திறக்கவும்",
+      familyTitle: "குடும்பக் கற்றல் தருணத்தை தொடங்குங்கள்",
+      familyBody: "ஒரு பிரார்த்தனையை அர்த்தம், மறுமொழி மற்றும் வயதுக்கு ஏற்ற வழிகாட்டலுடன் குடும்பப் பயிற்சியாக மாற்றுங்கள்.",
+      familyPoint1: "வயது குழுவையும் கற்றல் முறையையும் தேர்வு செய்யவும்",
+      familyPoint2: "குழந்தைகளும் பெற்றோரும் சேர்ந்து செய்யும் சிறிய வழிகாட்டும் ஓட்டத்தைப் பெறுங்கள்",
+      familyCta: "குடும்பக் கற்றலைத் திறக்கவும்",
+      thisMonth: "இந்த மாதம்",
       mantraLine: "ஓம் நமஃ சிவாய",
     },
     search: {
@@ -630,6 +1063,11 @@ const translations: Record<LanguageKey, TranslationTree> = {
       placeholderFestival: "திருவிழா பெயரை தேடுங்கள்",
       placeholderDeity: "தெய்வ பெயரை தேடுங்கள்",
       results: "முடிவுகள்",
+      festivalResults: "திருவிழா முடிவுகள்",
+      deityResults: "தெய்வ முடிவுகள்",
+      relatedPrayers: "தொடர்புடைய பிரார்த்தனைகள்",
+      tapFestivalToBrowse: "தொடர்புடைய பிரார்த்தனைகள் மற்றும் வழிகாட்டிகளை காண திருவிழாவை தட்டவும்.",
+      tapDeityToBrowse: "தொடர்புடைய பிரார்த்தனைகளை காண தெய்வத்தை தட்டவும்.",
       noResults: "பிரார்த்தனைகள் கிடைக்கவில்லை",
       noResultsBody: "வேறு தேடல் வழியை முயற்சிக்கவும் அல்லது வடிகட்டியை நீக்கவும்.",
     },
@@ -644,6 +1082,13 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browserPreview: "இப்போது உலாவி குரல் முன்னோட்டம் மட்டும்",
       tapToListen: "கேட்க தட்டவும்",
       audioPrayer: "ஆடியோ பிரார்த்தனை",
+      pauseAudio: "ஆடியோவை நிறுத்தவும்",
+      languageLabel: "மொழி",
+      nowPlaying: "இப்போது ஒலிக்கிறது",
+      lockedTitle: "முழு ஆடியோ நூலகத்தை திறக்கவும்",
+      lockedBody: "இலவச அணுகலில் வாராந்திர பிரார்த்தனை தொகுப்பு கிடைக்கும். பிரீமியத்தில் வளர்ந்து வரும் ஆடியோ நூலகம், வழிகாட்டும் தொகுப்புகள் மற்றும் பின்னர் ஆஃப்லைன் கேட்கும் வசதி சேரும்.",
+      teaserBody: "பிரீமியம் ஆடியோவில் வளர்ந்து வரும் நூலகம், வழிகாட்டும் கேட்பு தொகுப்புகள் மற்றும் மேலும் பாடல்கள் சேரும் போது சிறந்த பிளேபேக் அம்சங்கள் அடங்கும்.",
+      explorePremium: "பிரீமியத்தை பார்க்கவும்",
     },
     reminders: {
       title: "பிரார்த்தனை நினைவூட்டல்கள்",
@@ -665,6 +1110,16 @@ const translations: Record<LanguageKey, TranslationTree> = {
       transliterated: "English இல்",
       textSize: "உரை அளவு",
       shareMessage: "இந்த பிரார்த்தனையை BhaktiVerse இல் படிக்கவும்",
+      featuredPrayer: "சிறப்பு பிரார்த்தனை",
+      devotionalPrayer: "பக்தி பிரார்த்தனை",
+      eveningPrayer: "மாலை பிரார்த்தனை",
+      lockedPrayerTitle: "இந்த பிரார்த்தனை பிரீமியத்தின் பகுதி",
+      lockedPrayerBody: "ஆப்பில் நீங்கள் இன்னும் பிரீமியம் பிரார்த்தனைகளை கண்டுபிடிக்கலாம், ஆனால் முழு வாசிப்பு அணுகல் BhaktiVerse பிரீமியத்தால் திறக்கப்படும்.",
+      premiumMeaningTitle: "பிரார்த்தனையை வாசிப்பதைத் தாண்டிச் செல்லுங்கள்",
+      premiumMeaningBody: "ஒவ்வொரு பிரார்த்தனையையும் எப்போது, ஏன், எப்படி சொல்ல வேண்டும் என்பதைப் புரிந்துகொள்ள பிரீமியம் ஒரு கற்றல் அடுக்கைச் சேர்க்கும்.",
+      premiumMeaningPoint1: "வரி வரியாக அர்த்தம் மற்றும் பக்தி சூழல்",
+      premiumMeaningPoint2: "உச்சரிப்பு வழிகாட்டல் மற்றும் பயிற்சி ஆதரவு",
+      premiumMeaningPoint3: "எப்போது ஜபிக்க வேண்டும், தினசரி முறையில் எப்படி சேர்க்க வேண்டும்",
     },
     profile: {
       title: "சுயவிவரம்",
@@ -680,7 +1135,57 @@ const translations: Record<LanguageKey, TranslationTree> = {
       appLanguageBody: "இது ஆப் UI, லேபிள்கள் மற்றும் மொத்த அனுபவத்தை கட்டுப்படுத்துகிறது.",
       prayerSourceLanguage: "பிரார்த்தனை மூல மொழி",
       prayerSourceBody: "English முறையில் ஆப் English இல் இருக்கும், ஆனால் பிரார்த்தனைகள் நீங்கள் தேர்ந்தெடுத்த மொழியில் இருந்து வரும்.",
+      membership: "BhaktiVerse பிரீமியம்",
+      membershipBody: "முக்கிய பக்தி அனுபவத்தை இலவசமாக வைத்துக்கொண்டு, பிரீமியம் வழிகாட்டும் வழிபாடு, வளமான ஆடியோ மற்றும் தனிப்பட்ட ஆன்மிக ஆதரவைத் திறக்கிறது.",
+      viewPremium: "பிரீமியத்தைப் பாருங்கள்",
+      notebook: "தனிப்பட்ட சுலோகம் நோட்ட்புக்",
+      notebookBody: "உங்கள் தினசரி சுலோகப் பாராயணங்களை தனிப்பட்ட முறையில் எழுதிச் சேமிக்கவும்.",
+      openNotebook: "நோட்ட்புக் திறக்கவும்",
+      sadhana: "தினசரி சாதனா",
+      sadhanaBody: "உங்கள் நேரம், கவனம் மற்றும் விருப்ப தெய்வத்தைப் பொறுத்து சிறிய மீண்டும் செய்யக்கூடிய பக்தி திட்டத்தை அமைக்கவும்.",
+      openSadhana: "தினசரி சாதனத்தைத் திறக்கவும்",
+      familyLearning: "குழந்தைகள் மற்றும் குடும்பக் கற்றல்",
+      familyLearningBody: "குழந்தைகளும் குடும்பங்களும் அர்த்தம், மறுமொழி மற்றும் பகிர்ந்த பயிற்சியுடன் சிறிய பக்தி அமர்வுகளை அனுபவிக்க வழிகாட்டுங்கள்.",
+      openFamilyLearning: "குடும்பக் கற்றலைத் திறக்கவும்",
       session: "அமர்வு",
+    },
+    premium: {
+      title: "BhaktiVerse பிரீமியம்",
+      subtitle: "ஒவ்வொரு நாளும் அமைதியாகவும் வழிகாட்டலுடனும் பயிற்சி செய்வதற்கான ஒரு நல்ல வழி",
+      currentPlan: "தற்போதைய திட்டம்",
+      freePlan: "இலவசம்",
+      premiumIndividual: "பிரீமியம் தனிநபர்",
+      premiumFamily: "பிரீமியம் குடும்பம்",
+      status: "நிலை",
+      active: "செயலில்",
+      inactive: "செயலற்றது",
+      trial: "சோதனை",
+      gracePeriod: "கிரேஸ் காலம்",
+      validUntil: "செல்லுபடியாகும் தேதி",
+      compareFree: "இதில் உள்ளது",
+      whyUpgrade: "பிரீமியத்தில் உள்ளவை",
+      freeLine1: "பிரார்த்தனை வாசிப்பு, தேடல், பிடித்தவை மற்றும் தினசரி நினைவூட்டல்கள்",
+      freeLine2: "அடிப்படை ஆடியோ அணுகல் மற்றும் தெய்வங்கள், திருவிழாக்கள் வழியாக பக்தி உலாவல்",
+      premiumLine1: "வழிகாட்டும் திருவிழா பூஜை, முழு ஆடியோ அணுகல் மற்றும் மேம்பட்ட நடைமுறைகள்",
+      premiumLine2: "தனிப்பட்ட பாராயணங்கள், குடும்பக் கற்றல் மற்றும் மேலும் தனிப்பயன் பக்தி ஓட்டம்",
+      featureFestivalGuides: "பொருட்கள் பட்டியல் மற்றும் படிப்படையான திருவிழா வழிகாட்டிகள்",
+      featureAudio: "மேம்பட்ட இயக்கத்துடன் முழு ஆடியோ நூலகம்",
+      featureSadhana: "சிறந்த நினைவூட்டல் திட்டங்கள் மற்றும் தினசரி சாதனா வழிகாட்டல்",
+      featureKids: "அர்த்தம் மற்றும் பயிற்சி ஆதரவுடன் குழந்தைகள் மற்றும் குடும்பக் கற்றல்",
+      featureNotebook: "தனிப்பட்ட பாராயணத்திற்கு தனிப்பட்ட சுலோகம் நோட்ட்புக்",
+      featureVoice: "உங்கள் சொந்த பாராயணத்தை பதிவு செய்து மீண்டும் கேளுங்கள்",
+      freeBody: "நீங்கள் தற்போது இலவச திட்டத்தில் உள்ளீர்கள்.",
+      premiumBody: "இந்த கணக்கில் பிரீமியம் செயலில் உள்ளது.",
+      familyBody: "இந்த கணக்கில் குடும்ப பிரீமியம் செயலில் உள்ளது.",
+      plansTitle: "பிரீமியம் திட்டங்கள்",
+      availablePlans: "உங்கள் திட்டத்தைத் தேர்வு செய்யவும்",
+      billingReadyBody: "BhaktiVerse இல் பிரீமியத்தைத் திறக்க ஒரு திட்டத்தைத் தேர்வு செய்யவும்.",
+      billingPreparingBody: "பிரீமியம் கட்டண அமைப்பு தயாராகிறது. இப்போது நீங்கள் நன்மைகளைப் பாரலாம், கட்டணம் தயாரானதும் திட்டங்கள் இங்கே தோன்றும்.",
+      choosePlanHint: "உங்கள் தினசரி சாதனைக்கு ஏற்ற திட்டத்தைத் தேர்வு செய்யவும்.",
+      plansPendingBody: "இந்த ஆப்பிற்கு உள்ளமைக்கப்பட்ட கொள்முதல்கள் செயல்படுத்தப்பட்டதும் திட்டங்கள் இங்கே தோன்றும்.",
+      plansUnavailable: "இப்போது திட்டங்கள் கிடைக்கவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.",
+      refreshCta: "திட்ட நிலையைப் புதுப்பிக்கவும்",
+      checkAccessCta: "அணுகலைச் சரிபார்க்கவும்",
     },
     favorites: {
       title: "பிடித்தவை",
@@ -695,6 +1200,9 @@ const translations: Record<LanguageKey, TranslationTree> = {
     common: {
       goodEvening: "शुभ संध्या",
       seeAll: "सर्व पहा",
+      premium: "प्रीमियम",
+      unlockPremium: "प्रीमियम अनलॉक करा",
+      signInToContinue: "पुढे जाण्यासाठी साइन इन करा",
       prayers: "प्रार्थना",
       quickSelect: "जलद निवड",
       searchPath: "शोध मार्ग",
@@ -720,6 +1228,21 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browseByFestival: "सणानुसार",
       browseByDeity: "देवतानुसार",
       featuredPrayers: "विशेष प्रार्थना",
+      premiumGuidesTitle: "मार्गदर्शित सणपूजा अनलॉक करा",
+      premiumGuidesBody: "प्रीमियम BhaktiVerse ला फक्त प्रार्थना वाचक न ठेवता सुव्यवस्थित भक्ती साथी बनवते.",
+      premiumGuidesPoint1: "साहित्य, टप्पे आणि ऑडिओसह सणपूजेचे मार्गदर्शक",
+      premiumGuidesPoint2: "व्यस्त वेळापत्रकासाठी वैयक्तिक दैनंदिन साधना योजना",
+      sadhanaTitle: "तुमची दैनंदिन साधना योजना उघडा",
+      sadhanaBody: "तुमच्या वेळ, लक्ष आणि आवडत्या देवतेनुसार छोटा भक्ती क्रम तयार करा.",
+      sadhanaPoint1: "10, 15 किंवा 20 मिनिटांचा क्रम निवडा",
+      sadhanaPoint2: "तुम्ही खरोखर पाळू शकाल असा सोपा प्रार्थना क्रम मिळवा",
+      sadhanaCta: "दैनिक साधना उघडा",
+      familyTitle: "कौटुंबिक शिकण्याचा क्षण सुरू करा",
+      familyBody: "एका प्रार्थनेला अर्थ, पुनरावृत्ती आणि वयानुसार सूचनांसह कौटुंबिक सरावात बदला.",
+      familyPoint1: "वयोगट आणि शिकण्याची शैली निवडा",
+      familyPoint2: "मुलं आणि पालक मिळून करू शकतील असा छोटा मार्गदर्शित क्रम मिळवा",
+      familyCta: "कुटुंब शिक्षण उघडा",
+      thisMonth: "या महिन्यात",
       mantraLine: "ॐ नमः शिवाय",
     },
     search: {
@@ -732,6 +1255,11 @@ const translations: Record<LanguageKey, TranslationTree> = {
       placeholderFestival: "सणाचे नाव शोधा",
       placeholderDeity: "देवतेचे नाव शोधा",
       results: "निकाल",
+      festivalResults: "सण परिणाम",
+      deityResults: "देवता परिणाम",
+      relatedPrayers: "संबंधित प्रार्थना",
+      tapFestivalToBrowse: "संबंधित प्रार्थना आणि मार्गदर्शक पाहण्यासाठी सणावर टॅप करा.",
+      tapDeityToBrowse: "संबंधित प्रार्थना पाहण्यासाठी देवतेवर टॅप करा.",
       noResults: "प्रार्थना सापडल्या नाहीत",
       noResultsBody: "दुसरा शोध मार्ग वापरा किंवा फिल्टर काढा.",
     },
@@ -746,6 +1274,13 @@ const translations: Record<LanguageKey, TranslationTree> = {
       browserPreview: "सध्या ब्राउझर व्हॉइस प्रिव्ह्यू",
       tapToListen: "ऐकण्यासाठी टॅप करा",
       audioPrayer: "ऑडिओ प्रार्थना",
+      pauseAudio: "ऑडिओ थांबवा",
+      languageLabel: "भाषा",
+      nowPlaying: "आता सुरू आहे",
+      lockedTitle: "पूर्ण ऑडिओ लायब्ररी अनलॉक करा",
+      lockedBody: "मुक्त प्रवेशात साप्ताहिक प्रार्थना संच मिळतो. प्रीमियममध्ये वाढती ऑडिओ लायब्ररी, मार्गदर्शित पॅक्स आणि पुढे ऑफलाइन ऐकणे मिळेल.",
+      teaserBody: "प्रीमियम ऑडिओमध्ये वाढती लायब्ररी, मार्गदर्शित ऐकण्याचे पॅक्स आणि अधिक ट्रॅक जोडले जातील तसे अधिक चांगली प्लेबॅक वैशिष्ट्ये असतील.",
+      explorePremium: "प्रीमियम पहा",
     },
     reminders: {
       title: "प्रार्थना स्मरणपत्रे",
@@ -767,6 +1302,16 @@ const translations: Record<LanguageKey, TranslationTree> = {
       transliterated: "English मध्ये",
       textSize: "मजकूर आकार",
       shareMessage: "ही प्रार्थना BhaktiVerse वर वाचा",
+      featuredPrayer: "विशेष प्रार्थना",
+      devotionalPrayer: "भक्ती प्रार्थना",
+      eveningPrayer: "सायंकाळची प्रार्थना",
+      lockedPrayerTitle: "ही प्रार्थना प्रीमियमचा भाग आहे",
+      lockedPrayerBody: "तुम्ही अजूनही अॅपमध्ये प्रीमियम प्रार्थना शोधू शकता, पण पूर्ण वाचन प्रवेश BhaktiVerse प्रीमियमसह अनलॉक होतो.",
+      premiumMeaningTitle: "फक्त प्रार्थना वाचण्यापलीकडे जा",
+      premiumMeaningBody: "प्रत्येक प्रार्थनेभोवती प्रीमियम शिकण्याची एक थर जोडेल, त्यामुळे ती कधी, का आणि कशी म्हणावी हे वापरकर्त्यांना समजेल.",
+      premiumMeaningPoint1: "ओळीनुसार अर्थ आणि भक्ती संदर्भ",
+      premiumMeaningPoint2: "उच्चार मार्गदर्शन आणि सराव मदत",
+      premiumMeaningPoint3: "कधी जप करायचा आणि दैनंदिन दिनचर्येत कसा समाविष्ट करायचा",
     },
     profile: {
       title: "प्रोफाइल",
@@ -782,7 +1327,57 @@ const translations: Record<LanguageKey, TranslationTree> = {
       appLanguageBody: "हे अॅप UI, लेबले आणि एकूण अनुभव नियंत्रित करते.",
       prayerSourceLanguage: "प्रार्थना स्रोत भाषा",
       prayerSourceBody: "English मोडमध्ये अॅप English मध्ये राहील, पण प्रार्थना तुम्ही निवडलेल्या भाषेतून येतील.",
+      membership: "BhaktiVerse प्रीमियम",
+      membershipBody: "मुख्य भक्ती अनुभव विनामूल्य ठेवा, तर प्रीमियम मार्गदर्शित पूजा, समृद्ध ऑडिओ आणि वैयक्तिक आध्यात्मिक मदत अनलॉक करते.",
+      viewPremium: "प्रीमियम पहा",
+      notebook: "खाजगी श्लोक वही",
+      notebookBody: "तुमच्या दैनंदिन श्लोक पठणांना खाजगीत लिहा आणि पुन्हा पाहा.",
+      openNotebook: "वही उघडा",
+      sadhana: "दैनिक साधना",
+      sadhanaBody: "तुमचा वेळ, लक्ष आणि आवडती देवता यानुसार छोटा पुनरावृत्ती होणारा भक्ती आराखडा तयार करा.",
+      openSadhana: "दैनिक साधना उघडा",
+      familyLearning: "मुलं आणि कुटुंब शिक्षण",
+      familyLearningBody: "मुलं आणि कुटुंबांना अर्थ, पुनरावृत्ती आणि सामायिक सरावासह छोट्या भक्ती सत्रांत मार्गदर्शन करा.",
+      openFamilyLearning: "कुटुंब शिक्षण उघडा",
       session: "सेशन",
+    },
+    premium: {
+      title: "BhaktiVerse प्रीमियम",
+      subtitle: "दररोजच्या साधनेसाठी अधिक शांत आणि मार्गदर्शित मार्ग",
+      currentPlan: "सध्याची योजना",
+      freePlan: "मुक्त",
+      premiumIndividual: "प्रीमियम वैयक्तिक",
+      premiumFamily: "प्रीमियम कुटुंब",
+      status: "स्थिती",
+      active: "सक्रिय",
+      inactive: "निष्क्रिय",
+      trial: "चाचणी",
+      gracePeriod: "ग्रेस कालावधी",
+      validUntil: "वैधता तारीख",
+      compareFree: "यात काय आहे",
+      whyUpgrade: "प्रीमियममध्ये समाविष्ट",
+      freeLine1: "प्रार्थना वाचन, शोध, आवडीचे आणि दैनंदिन स्मरणपत्रे",
+      freeLine2: "मूलभूत ऑडिओ प्रवेश आणि देवता व सणांनुसार भक्ती ब्राउझिंग",
+      premiumLine1: "मार्गदर्शित सणपूजा, पूर्ण ऑडिओ प्रवेश आणि अधिक चांगली दिनचर्या",
+      premiumLine2: "खाजगी पठण, कुटुंब शिक्षण आणि अधिक वैयक्तिक भक्ती प्रवाह",
+      featureFestivalGuides: "साहित्य यादी आणि टप्प्याटप्प्याचे सण मार्गदर्शक",
+      featureAudio: "अधिक चांगल्या प्लेबॅकसह पूर्ण ऑडिओ लायब्ररी",
+      featureSadhana: "स्मार्ट स्मरणपत्र योजना आणि दैनिक साधना मार्गदर्शन",
+      featureKids: "अर्थ आणि सराव सहाय्यासह मुलं आणि कुटुंब शिक्षण",
+      featureNotebook: "वैयक्तिक पठणासाठी खाजगी श्लोक वही",
+      featureVoice: "तुमचे स्वतःचे पठण रेकॉर्ड करा आणि पुन्हा ऐका",
+      freeBody: "तुम्ही सध्या मुक्त योजनेवर आहात.",
+      premiumBody: "या खात्यावर प्रीमियम प्रवेश सक्रिय आहे.",
+      familyBody: "या खात्यावर कुटुंब प्रीमियम प्रवेश सक्रिय आहे.",
+      plansTitle: "प्रीमियम योजना",
+      availablePlans: "तुमची योजना निवडा",
+      billingReadyBody: "BhaktiVerse मध्ये प्रीमियम अनलॉक करण्यासाठी योजना निवडा.",
+      billingPreparingBody: "प्रीमियम चेकआउट तयार होत आहे. आत्ता तुम्ही फायदे पाहू शकता, आणि बिलिंग उपलब्ध झाल्यावर योजना येथे दिसतील.",
+      choosePlanHint: "तुमच्या दैनंदिन साधनेसाठी योग्य योजना निवडा.",
+      plansPendingBody: "या अॅपसाठी इन-अॅप खरेदी सक्षम झाल्यावर योजना येथे दिसतील.",
+      plansUnavailable: "आत्ता योजना उपलब्ध नाहीत. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.",
+      refreshCta: "योजना स्थिती रीफ्रेश करा",
+      checkAccessCta: "प्रवेश तपासा",
     },
     favorites: {
       title: "आवडीचे",
@@ -798,6 +1393,7 @@ const prayerTitleTranslations: Partial<Record<Exclude<LanguageKey, "english">, R
   hindi: {
     "Hanuman Chalisa": "हनुमान चालीसा",
     "Ganesh Aarti": "गणेश आरती",
+    Suprabhatam: "सुप्रभातम्",
     "Surya Namaskar Mantra": "सूर्य नमस्कार मंत्र",
     "Mahamrityunjaya Mantra": "महामृत्युंजय मंत्र",
     "Durga Aarti": "दुर्गा आरती",
@@ -812,6 +1408,7 @@ const prayerTitleTranslations: Partial<Record<Exclude<LanguageKey, "english">, R
   telugu: {
     "Hanuman Chalisa": "హనుమాన్ చాలీసా",
     "Ganesh Aarti": "గణేశ ఆరతి",
+    Suprabhatam: "సుప్రభాతం",
     "Surya Namaskar Mantra": "సూర్య నమస్కార మంత్రం",
     "Mahamrityunjaya Mantra": "మహామృత్యుంజయ మంత్రం",
     "Durga Aarti": "దుర్గ ఆరతి",
@@ -826,6 +1423,7 @@ const prayerTitleTranslations: Partial<Record<Exclude<LanguageKey, "english">, R
   kannada: {
     "Hanuman Chalisa": "ಹನುಮಾನ್ ಚಾಲೀಸಾ",
     "Ganesh Aarti": "ಗಣೇಶ ಆರತಿ",
+    Suprabhatam: "ಸುಪ್ರಭಾತಂ",
     "Surya Namaskar Mantra": "ಸೂರ್ಯ ನಮಸ್ಕಾರ ಮಂತ್ರ",
     "Mahamrityunjaya Mantra": "ಮಹಾಮೃತ್ಯುಂಜಯ ಮಂತ್ರ",
     "Durga Aarti": "ದುರ್ಗಾ ಆರತಿ",
@@ -840,6 +1438,7 @@ const prayerTitleTranslations: Partial<Record<Exclude<LanguageKey, "english">, R
   tamil: {
     "Hanuman Chalisa": "ஹனுமான் சாலிசா",
     "Ganesh Aarti": "கணேஷ் ஆரத்தி",
+    Suprabhatam: "சுப்ரபாதம்",
     "Surya Namaskar Mantra": "சூர்ய நமஸ்கார மந்திரம்",
     "Mahamrityunjaya Mantra": "மகா மிருத்யுஞ்ஜய மந்திரம்",
     "Durga Aarti": "துர்கா ஆரத்தி",
@@ -854,6 +1453,7 @@ const prayerTitleTranslations: Partial<Record<Exclude<LanguageKey, "english">, R
   marathi: {
     "Hanuman Chalisa": "हनुमान चालीसा",
     "Ganesh Aarti": "गणेश आरती",
+    Suprabhatam: "सुप्रभातम",
     "Surya Namaskar Mantra": "सूर्य नमस्कार मंत्र",
     "Mahamrityunjaya Mantra": "महामृत्युंजय मंत्र",
     "Durga Aarti": "दुर्गा आरती",
@@ -868,19 +1468,19 @@ const prayerTitleTranslations: Partial<Record<Exclude<LanguageKey, "english">, R
 };
 
 const deityTranslations: Partial<Record<Exclude<LanguageKey, "english">, Record<string, string>>> = {
-  hindi: { Hanuman: "हनुमान", Ganesha: "गणेश", Surya: "सूर्य", Shiva: "शिव", Durga: "दुर्गा", Lakshmi: "लक्ष्मी", Krishna: "कृष्ण", Rama: "राम", "Sai Baba": "साईं बाबा" },
-  telugu: { Hanuman: "హనుమంతుడు", Ganesha: "గణేశుడు", Surya: "సూర్యుడు", Shiva: "శివుడు", Durga: "దుర్గమ్మ", Lakshmi: "లక్ష్మి", Krishna: "కృష్ణుడు", Rama: "రాముడు", "Sai Baba": "సాయిబాబా" },
-  kannada: { Hanuman: "ಹನುಮಾನ್", Ganesha: "ಗಣೇಶ", Surya: "ಸೂರ್ಯ", Shiva: "ಶಿವ", Durga: "ದುರ್ಗೆ", Lakshmi: "ಲಕ್ಷ್ಮೀ", Krishna: "ಕೃಷ್ಣ", Rama: "ರಾಮ", "Sai Baba": "ಸಾಯಿ ಬಾಬಾ" },
-  tamil: { Hanuman: "ஆஞ்சநேயர்", Ganesha: "கணேசர்", Surya: "சூரியன்", Shiva: "சிவன்", Durga: "துர்கை", Lakshmi: "லட்சுமி", Krishna: "கிருஷ்ணர்", Rama: "ராமர்", "Sai Baba": "சாய்பாபா" },
-  marathi: { Hanuman: "हनुमान", Ganesha: "गणपती", Surya: "सूर्य", Shiva: "शिव", Durga: "दुर्गा", Lakshmi: "लक्ष्मी", Krishna: "कृष्ण", Rama: "राम", "Sai Baba": "साई बाबा" },
+  hindi: { Hanuman: "हनुमान", Ganesha: "गणेश", Surya: "सूर्य", Shiva: "शिव", Durga: "दुर्गा", Lakshmi: "लक्ष्मी", Krishna: "कृष्ण", Rama: "राम", Balaji: "बालाजी", "Sai Baba": "साईं बाबा", "Saraswati Devi": "सरस्वती देवी", "Saraswati Amma": "सरस्वती अम्मा" },
+  telugu: { Hanuman: "హనుమంతుడు", Ganesha: "గణేశుడు", Surya: "సూర్యుడు", Shiva: "శివుడు", Durga: "దుర్గమ్మ", Lakshmi: "లక్ష్మి", Krishna: "కృష్ణుడు", Rama: "రాముడు", Balaji: "బాలాజీ", "Sai Baba": "సాయిబాబా", "Saraswati Devi": "సరస్వతి దేవి", "Saraswati Amma": "సరస్వతి అమ్మ" },
+  kannada: { Hanuman: "ಹನುಮಾನ್", Ganesha: "ಗಣೇಶ", Surya: "ಸೂರ್ಯ", Shiva: "ಶಿವ", Durga: "ದುರ್ಗೆ", Lakshmi: "ಲಕ್ಷ್ಮೀ", Krishna: "ಕೃಷ್ಣ", Rama: "ರಾಮ", Balaji: "ಬಾಲಾಜಿ", "Sai Baba": "ಸಾಯಿ ಬಾಬಾ", "Saraswati Devi": "ಸರಸ್ವತಿ ದೇವಿ", "Saraswati Amma": "ಸರಸ್ವತಿ ಅಮ್ಮ" },
+  tamil: { Hanuman: "ஆஞ்சநேயர்", Ganesha: "கணேசர்", Surya: "சூரியன்", Shiva: "சிவன்", Durga: "துர்கை", Lakshmi: "லட்சுமி", Krishna: "கிருஷ்ணர்", Rama: "ராமர்", Balaji: "பாலாஜி", "Sai Baba": "சாய்பாபா", "Saraswati Devi": "சரஸ்வதி தேவி", "Saraswati Amma": "சரஸ்வதி அம்மா" },
+  marathi: { Hanuman: "हनुमान", Ganesha: "गणपती", Surya: "सूर्य", Shiva: "शिव", Durga: "दुर्गा", Lakshmi: "लक्ष्मी", Krishna: "कृष्ण", Rama: "राम", Balaji: "बालाजी", "Sai Baba": "साई बाबा", "Saraswati Devi": "सरस्वती देवी", "Saraswati Amma": "सरस्वती अम्मा" },
 };
 
 const festivalTranslations: Partial<Record<Exclude<LanguageKey, "english">, Record<string, string>>> = {
-  hindi: { "Hanuman Jayanti": "हनुमान जयंती", "Ganesh Chaturthi": "गणेश चतुर्थी", "Makar Sankranti": "मकर संक्रांति", "Maha Shivaratri": "महाशिवरात्रि", Navratri: "नवरात्रि", Diwali: "दीवाली", Holi: "होली" },
-  telugu: { "Hanuman Jayanti": "హనుమాన్ జయంతి", "Ganesh Chaturthi": "వినాయక చవితి", "Makar Sankranti": "మకర సంక్రాంతి", "Maha Shivaratri": "మహాశివరాత్రి", Navratri: "నవరాత్రి", Diwali: "దీపావళి", Holi: "హోళీ" },
-  kannada: { "Hanuman Jayanti": "ಹನುಮ ಜಯಂತಿ", "Ganesh Chaturthi": "ಗಣೇಶ ಚತುರ್ಥಿ", "Makar Sankranti": "ಮಕರ ಸಂಕ್ರಾಂತಿ", "Maha Shivaratri": "ಮಹಾಶಿವರಾತ್ರಿ", Navratri: "ನವರಾತ್ರಿ", Diwali: "ದೀಪಾವಳಿ", Holi: "ಹೋಳಿ" },
-  tamil: { "Hanuman Jayanti": "அஞ்சநேயர் ஜெயந்தி", "Ganesh Chaturthi": "விநாயகர் சதுர்த்தி", "Makar Sankranti": "மகர சங்கராந்தி", "Maha Shivaratri": "மகாசிவராத்திரி", Navratri: "நவராத்திரி", Diwali: "தீபாவளி", Holi: "ஹோலி" },
-  marathi: { "Hanuman Jayanti": "हनुमान जयंती", "Ganesh Chaturthi": "गणेश चतुर्थी", "Makar Sankranti": "मकर संक्रांत", "Maha Shivaratri": "महाशिवरात्री", Navratri: "नवरात्री", Diwali: "दिवाळी", Holi: "होळी" },
+  hindi: { "Hanuman Jayanti": "हनुमान जयंती", "Ganesh Chaturthi": "गणेश चतुर्थी", "Makar Sankranti": "मकर संक्रांति", "Maha Shivaratri": "महाशिवरात्रि", Navratri: "नवरात्रि", Diwali: "दीवाली", Holi: "होली", "Rama Navami": "राम नवमी" },
+  telugu: { "Hanuman Jayanti": "హనుమాన్ జయంతి", "Ganesh Chaturthi": "వినాయక చవితి", "Makar Sankranti": "మకర సంక్రాంతి", "Maha Shivaratri": "మహాశివరాత్రి", Navratri: "నవరాత్రి", Diwali: "దీపావళి", Holi: "హోళీ", "Rama Navami": "రామ నవమి" },
+  kannada: { "Hanuman Jayanti": "ಹನುಮ ಜಯಂತಿ", "Ganesh Chaturthi": "ಗಣೇಶ ಚತುರ್ಥಿ", "Makar Sankranti": "ಮಕರ ಸಂಕ್ರಾಂತಿ", "Maha Shivaratri": "ಮಹಾಶಿವರಾತ್ರಿ", Navratri: "ನವರಾತ್ರಿ", Diwali: "ದೀಪಾವಳಿ", Holi: "ಹೋಳಿ", "Rama Navami": "ರಾಮ ನವಮಿ" },
+  tamil: { "Hanuman Jayanti": "அஞ்சநேயர் ஜெயந்தி", "Ganesh Chaturthi": "விநாயகர் சதுர்த்தி", "Makar Sankranti": "மகர சங்கராந்தி", "Maha Shivaratri": "மகாசிவராத்திரி", Navratri: "நவராத்திரி", Diwali: "தீபாவளி", Holi: "ஹோலி", "Rama Navami": "ராம நவமி" },
+  marathi: { "Hanuman Jayanti": "हनुमान जयंती", "Ganesh Chaturthi": "गणेश चतुर्थी", "Makar Sankranti": "मकर संक्रांत", "Maha Shivaratri": "महाशिवरात्री", Navratri: "नवरात्री", Diwali: "दिवाळी", Holi: "होळी", "Rama Navami": "राम नवमी" },
 };
 
 const weekdayTranslations: Partial<Record<Exclude<LanguageKey, "english">, Record<string, string>>> = {
@@ -917,6 +1517,79 @@ const prayerSourceLabels: Record<string, string> = {
   Sanskrit: "Sanskrit",
 };
 
+const prayerTitleAliases: Record<string, string> = {
+  suprabhatam: "Suprabhatam",
+};
+
+const deityAliases: Record<string, string> = {
+  balaji: "Balaji",
+  ganesha: "Ganesha",
+  shiva: "Shiva",
+  krishna: "Krishna",
+  lakshmi: "Lakshmi",
+  durga: "Durga",
+  hanuman: "Hanuman",
+  rama: "Rama",
+  "sai baba": "Sai Baba",
+  "saraswati devi": "Saraswati Devi",
+  "saraswati amma": "Saraswati Amma",
+};
+
+const festivalAliases: Record<string, string> = {
+  "ganesh chaturthi": "Ganesh Chaturthi",
+  navratri: "Navratri",
+  diwali: "Diwali",
+  holi: "Holi",
+  "hanuman jayanti": "Hanuman Jayanti",
+  "makar sankranti": "Makar Sankranti",
+  "maha shivaratri": "Maha Shivaratri",
+  "rama navami": "Rama Navami",
+  "ram navami": "Rama Navami",
+  "raam navami": "Rama Navami",
+};
+
+const categoryAliases: Record<string, string> = {
+  chalisa: "Chalisa",
+  aarti: "Aarti",
+  mantra: "Mantra",
+  puja: "Puja",
+  stotram: "Stotram",
+  bhajan: "Bhajan",
+};
+
+function canonicalizeLookupValue(value: string) {
+  return value.trim().toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ");
+}
+
+function resolveTranslationKey(
+  value: string,
+  aliases: Record<string, string>,
+  translationSet?: Record<string, string>
+) {
+  const normalized = canonicalizeLookupValue(value);
+  const directAlias = aliases[normalized];
+  if (directAlias) return directAlias;
+
+  if (translationSet) {
+    const exactKey = Object.keys(translationSet).find(
+      (key) => canonicalizeLookupValue(key) === normalized
+    );
+    if (exactKey) return exactKey;
+  }
+
+  return value;
+}
+
+function extractMinuteCount(value: string | number | null | undefined) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(1, Math.round(value));
+  }
+
+  if (typeof value !== "string") return null;
+  const match = value.match(/(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
 function normalizeLanguage(language: string): LanguageKey {
   return (language || "English").toLowerCase() as LanguageKey;
 }
@@ -943,19 +1616,25 @@ export function t(language: string, path: string) {
 export function getLocalizedPrayerTitle(language: string, title: string) {
   const normalized = normalizeLanguage(language);
   if (normalized === "english") return title;
-  return prayerTitleTranslations[normalized]?.[title] ?? title;
+  const translationSet = prayerTitleTranslations[normalized];
+  const resolvedKey = resolveTranslationKey(title, prayerTitleAliases, translationSet);
+  return translationSet?.[resolvedKey] ?? title;
 }
 
 export function getLocalizedDeity(language: string, deity: string) {
   const normalized = normalizeLanguage(language);
   if (normalized === "english") return deity;
-  return deityTranslations[normalized]?.[deity] ?? deity;
+  const translationSet = deityTranslations[normalized];
+  const resolvedKey = resolveTranslationKey(deity, deityAliases, translationSet);
+  return translationSet?.[resolvedKey] ?? deity;
 }
 
 export function getLocalizedFestival(language: string, festival: string) {
   const normalized = normalizeLanguage(language);
   if (normalized === "english") return festival;
-  return festivalTranslations[normalized]?.[festival] ?? festival;
+  const translationSet = festivalTranslations[normalized];
+  const resolvedKey = resolveTranslationKey(festival, festivalAliases, translationSet);
+  return translationSet?.[resolvedKey] ?? festival;
 }
 
 export function getLocalizedWeekday(language: string, day: string) {
@@ -967,7 +1646,9 @@ export function getLocalizedWeekday(language: string, day: string) {
 export function getLocalizedCategory(language: string, category: string) {
   const normalized = normalizeLanguage(language);
   if (normalized === "english") return category;
-  return categoryTranslations[normalized]?.[category] ?? category;
+  const translationSet = categoryTranslations[normalized];
+  const resolvedKey = resolveTranslationKey(category, categoryAliases, translationSet);
+  return translationSet?.[resolvedKey] ?? category;
 }
 
 export function getLanguageOptionLabel(language: string) {
@@ -976,4 +1657,75 @@ export function getLanguageOptionLabel(language: string) {
 
 export function getPrayerSourceLabel(language: string) {
   return prayerSourceLabels[language] ?? language;
+}
+
+export function getLocalizedReadDuration(language: string, duration: string) {
+  const normalized = normalizeLanguage(language);
+  const minutes = extractMinuteCount(duration);
+  if (!minutes) return duration;
+  if (normalized === "english") return `${minutes} min read`;
+
+  const patterns: Record<Exclude<LanguageKey, "english">, string> = {
+    hindi: `${minutes} मिनट पढ़ें`,
+    telugu: `${minutes} నిమి చదువు`,
+    kannada: `${minutes} ನಿಮಿಷ ಓದು`,
+    tamil: `${minutes} நிமிட வாசிப்பு`,
+    marathi: `${minutes} मिनिट वाचन`,
+  };
+
+  return patterns[normalized];
+}
+
+export function getLocalizedMinutesLabel(language: string, value: string | number) {
+  const normalized = normalizeLanguage(language);
+  const minutes = extractMinuteCount(value);
+  if (!minutes) return typeof value === "string" ? value : `${value}`;
+  if (normalized === "english") return `${minutes} min`;
+
+  const patterns: Record<Exclude<LanguageKey, "english">, string> = {
+    hindi: `${minutes} मिनट`,
+    telugu: `${minutes} నిమి`,
+    kannada: `${minutes} ನಿಮಿ`,
+    tamil: `${minutes} நிமி`,
+    marathi: `${minutes} मिनिट`,
+  };
+
+  return patterns[normalized];
+}
+
+export function getLocalizedAudioMeta(language: string, meta: string) {
+  const normalized = normalizeLanguage(language);
+  if (normalized === "english") return meta;
+
+  const minutes = extractMinuteCount(meta);
+  const suffix = meta.replace(/^\s*\d+\s*min(?:\s*read)?\s*(?:[·•-]\s*)?/i, "").trim();
+  const localizedSuffix =
+    canonicalizeLookupValue(suffix) === "audio prayer" ? t(language, "audio.audioPrayer") : suffix;
+
+  if (!minutes) {
+    return localizedSuffix || meta;
+  }
+
+  const minuteLabel = getLocalizedMinutesLabel(language, minutes);
+  return localizedSuffix ? `${minuteLabel} · ${localizedSuffix}` : minuteLabel;
+}
+
+export function getLocalizedPrayerNote(language: string, note: string) {
+  const normalized = normalizeLanguage(language);
+  if (normalized === "english") return note;
+
+  const trimmed = note.trim();
+  const audioMatch = trimmed.match(
+    /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\s+Audio Prayer$/i
+  );
+  if (audioMatch) {
+    return `${getLocalizedWeekday(language, audioMatch[1])} ${t(language, "audio.audioPrayer")}`;
+  }
+
+  if (trimmed === "Festival Prayer") return t(language, "home.festivalPrayer");
+  if (trimmed === "Featured Prayer") return t(language, "prayerDetail.featuredPrayer");
+  if (trimmed === "Devotional Prayer") return t(language, "prayerDetail.devotionalPrayer");
+  if (trimmed === "Evening Prayer") return t(language, "prayerDetail.eveningPrayer");
+
+  return note;
 }

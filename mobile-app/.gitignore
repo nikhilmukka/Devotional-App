@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.save
+.DS_Store
+.expo
+dist/
+build/
+*.keystore
+*.jks

@@ -49,7 +49,7 @@ function isNotebookSetupError(error: unknown) {
 }
 
 export function ShlokaNotebookScreen({ navigation }: { navigation: any }) {
-  const { user, appLanguage, hasPremiumAccess } = useApp();
+  const { user, appLanguage, hasPremiumAccess, logout } = useApp();
   const tr = (path: string) => t(appLanguage, path);
   const [entries, setEntries] = useState<NotebookEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -153,7 +153,7 @@ export function ShlokaNotebookScreen({ navigation }: { navigation: any }) {
   };
 
   const handleDelete = (entry: NotebookEntry) => {
-    if (!user?.id || user.isGuest) return;
+    if (!user?.id || user.isGuest || !hasPremiumAccess) return;
 
     Alert.alert(
       tr("notebook.delete"),
@@ -184,6 +184,7 @@ export function ShlokaNotebookScreen({ navigation }: { navigation: any }) {
   };
 
   const lockedBody = user?.isGuest ? tr("notebook.guestBody") : tr("notebook.lockedBody");
+  const lockedCta = user?.isGuest ? tr("common.signInToContinue") : tr("notebook.openPremium");
 
   const stopActivePlayback = useCallback(async () => {
     if (!soundRef.current) return;
@@ -197,6 +198,26 @@ export function ShlokaNotebookScreen({ navigation }: { navigation: any }) {
       setPlayingEntryId(null);
     }
   }, []);
+
+  useEffect(() => {
+    if (user?.id && !user.isGuest && hasPremiumAccess) {
+      return;
+    }
+
+    resetComposer();
+    setRecordingEntryId(null);
+    setPlayingEntryId(null);
+    setErrorText("");
+
+    if (recordingRef.current) {
+      const activeRecording = recordingRef.current;
+      recordingRef.current = null;
+      void activeRecording.stopAndUnloadAsync().catch(() => undefined);
+      void prepareAudioForPlayback().catch(() => undefined);
+    }
+
+    void stopActivePlayback();
+  }, [hasPremiumAccess, resetComposer, stopActivePlayback, user?.id, user?.isGuest]);
 
   const startRecordingForEntry = async (entry: NotebookEntry) => {
     if (!user?.id) return;
@@ -293,7 +314,7 @@ export function ShlokaNotebookScreen({ navigation }: { navigation: any }) {
   };
 
   const handleDeleteRecording = (entry: NotebookEntry) => {
-    if (!user?.id) return;
+    if (!user?.id || user.isGuest || !hasPremiumAccess) return;
 
     Alert.alert(
       tr("notebook.deleteRecording"),
@@ -338,8 +359,20 @@ export function ShlokaNotebookScreen({ navigation }: { navigation: any }) {
           <SectionCard>
             <Text style={styles.sectionTitle}>{tr("notebook.lockedTitle")}</Text>
             <Text style={styles.sectionBody}>{lockedBody}</Text>
-            <Pressable style={styles.primaryButton} onPress={() => navigation.navigate("Premium")}>
-              <Text style={styles.primaryButtonText}>{tr("notebook.openPremium")}</Text>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => {
+                if (user?.isGuest) {
+                  void logout();
+                  return;
+                }
+
+                navigation.navigate("Premium", {
+                  postPurchaseRedirect: "ShlokaNotebook",
+                });
+              }}
+            >
+              <Text style={styles.primaryButtonText}>{lockedCta}</Text>
             </Pressable>
           </SectionCard>
         ) : (

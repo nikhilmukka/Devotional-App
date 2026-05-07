@@ -9,10 +9,6 @@ import { useApp } from "../context/AppContext";
 import { fetchResolvedReminder, type HomeReminderItem } from "../lib/supabase/content";
 import { getTodayReminder } from "../data/reminders";
 import {
-  fetchRecentNotificationActivity,
-  type NotificationActivityItem,
-} from "../lib/supabase/profile";
-import {
   getLocalizedPrayerTitle,
   getLocalizedWeekday,
   t,
@@ -28,19 +24,22 @@ export function RemindersScreen({ navigation }: { navigation: any }) {
     isSupabaseConnected,
     dailyReminderEnabled,
     festivalReminderEnabled,
+    festivalPreparationReminderEnabled,
+    festivalPreparationLeadDays,
     reminderTime,
     pushRegistrationStatus,
     pushRegistrationMessage,
+    isDeviceRegistered,
     setDailyReminderEnabled,
     setFestivalReminderEnabled,
+    setFestivalPreparationReminderEnabled,
+    setFestivalPreparationLeadDays,
     registerDeviceForNotifications,
-    scheduleLocalNotificationPreview,
+    logout,
   } = useApp();
 
   const tr = (path: string) => t(appLanguage, path);
   const [liveReminder, setLiveReminder] = useState<HomeReminderItem | null>(null);
-  const [notificationActivity, setNotificationActivity] = useState<NotificationActivityItem[]>([]);
-  const [activityRefreshNonce, setActivityRefreshNonce] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -76,35 +75,10 @@ export function RemindersScreen({ navigation }: { navigation: any }) {
     prayerSourceLanguage,
   ]);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadNotificationActivity() {
-      if (!user?.id || user.isGuest || !isSupabaseConnected) {
-        if (active) {
-          setNotificationActivity([]);
-        }
-        return;
-      }
-
-      try {
-        const activity = await fetchRecentNotificationActivity(user.id);
-        if (active) {
-          setNotificationActivity(activity);
-        }
-      } catch (error) {
-        console.warn("Failed to load notification activity", error);
-      }
-    }
-
-    void loadNotificationActivity();
-
-    return () => {
-      active = false;
-    };
-  }, [activityRefreshNonce, isSupabaseConnected, pushRegistrationStatus, user?.id, user?.isGuest]);
-
   const fallbackReminder = getTodayReminder();
+  const getPreparationLeadLabel = (days: number) =>
+    days === 1 ? tr("reminders.preparationLeadOneDay") : tr("reminders.preparationLeadTwoDays");
+  const deviceIsRegistered = isDeviceRegistered || pushRegistrationStatus === "registered";
   const reminder = useMemo<HomeReminderItem | null>(() => {
     if (liveReminder) return liveReminder;
     if (isSupabaseConnected) return null;
@@ -147,7 +121,12 @@ export function RemindersScreen({ navigation }: { navigation: any }) {
       <View style={styles.content}>
         <SectionCard>
           <Text style={styles.sectionTitle}>{tr("reminders.settings")}</Text>
-          <View style={styles.settingRow}>
+          {user?.isGuest ? (
+            <Text style={styles.settingNotice}>
+              Sign in to turn on devotional reminders and keep them synced to your account.
+            </Text>
+          ) : null}
+          <View style={[styles.settingRow, user?.isGuest && styles.settingRowDisabled]}>
             <View style={styles.settingTextWrap}>
               <Text style={styles.settingTitle}>{tr("reminders.dailyReminder")}</Text>
               <Text style={styles.settingBody}>
@@ -157,12 +136,13 @@ export function RemindersScreen({ navigation }: { navigation: any }) {
             <Switch
               value={dailyReminderEnabled}
               onValueChange={setDailyReminderEnabled}
+              disabled={Boolean(user?.isGuest)}
               trackColor={{ false: "#D9C8AF", true: "#E7B082" }}
               thumbColor={dailyReminderEnabled ? AppColors.accent : "#FFF7EE"}
             />
           </View>
 
-          <View style={[styles.settingRow, styles.settingRowLast]}>
+          <View style={[styles.settingRow, styles.settingRowLast, user?.isGuest && styles.settingRowDisabled]}>
             <View style={styles.settingTextWrap}>
               <Text style={styles.settingTitle}>{tr("reminders.festivalReminder")}</Text>
               <Text style={styles.settingBody}>{tr("reminders.todayWillShow")}</Text>
@@ -170,6 +150,7 @@ export function RemindersScreen({ navigation }: { navigation: any }) {
             <Switch
               value={festivalReminderEnabled}
               onValueChange={setFestivalReminderEnabled}
+              disabled={Boolean(user?.isGuest)}
               trackColor={{ false: "#D9C8AF", true: "#E7B082" }}
               thumbColor={festivalReminderEnabled ? AppColors.accent : "#FFF7EE"}
             />
@@ -187,108 +168,119 @@ export function RemindersScreen({ navigation }: { navigation: any }) {
               tr("reminders.advancedPoint2"),
               tr("reminders.advancedPoint3"),
             ]}
-            ctaLabel={tr("common.unlockPremium")}
-            onPress={() => navigation.navigate("Premium")}
+            ctaLabel={user?.isGuest ? tr("common.signInToContinue") : tr("common.unlockPremium")}
+            onPress={() => {
+              if (user?.isGuest) {
+                void logout();
+                return;
+              }
+
+              navigation.navigate("Premium", {
+                postPurchaseRedirect: "Reminders",
+              });
+            }}
           />
+        ) : null}
+
+        {hasPremiumAccess ? (
+          <SectionCard>
+            <Text style={styles.sectionTitle}>{tr("reminders.premiumSectionTitle")}</Text>
+            <Text style={styles.settingBody}>{tr("reminders.premiumSectionBody")}</Text>
+
+            <View style={styles.settingRow}>
+              <View style={styles.settingTextWrap}>
+                <Text style={styles.settingTitle}>{tr("reminders.preparationReminderTitle")}</Text>
+                <Text style={styles.settingBody}>{tr("reminders.preparationReminderBody")}</Text>
+              </View>
+              <Switch
+                value={festivalPreparationReminderEnabled}
+                onValueChange={setFestivalPreparationReminderEnabled}
+                trackColor={{ false: "#D9C8AF", true: "#E7B082" }}
+                thumbColor={festivalPreparationReminderEnabled ? AppColors.accent : "#FFF7EE"}
+              />
+            </View>
+
+            <View style={styles.settingRowLast}>
+              <Text style={styles.settingTitle}>{tr("reminders.preparationLeadTimeTitle")}</Text>
+              <Text style={styles.settingBody}>{tr("reminders.preparationLeadTimeBody")}</Text>
+              <View style={styles.optionButtonRow}>
+                {[1, 2].map((days) => {
+                  const active = festivalPreparationLeadDays === days;
+                  return (
+                    <Pressable
+                      key={days}
+                      style={[styles.optionButton, active && styles.optionButtonActive]}
+                      onPress={() => setFestivalPreparationLeadDays(days)}
+                    >
+                      <Text
+                        style={[
+                          styles.optionButtonText,
+                          active && styles.optionButtonTextActive,
+                        ]}
+                      >
+                        {getPreparationLeadLabel(days)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          </SectionCard>
         ) : null}
 
         <SectionCard>
           <Text style={styles.sectionTitle}>Device Notifications</Text>
           <Text style={styles.settingBody}>
-            Register this iPhone for devotional push notifications. This is the groundwork step before we connect server-side sending.
+            {user?.isGuest
+              ? "Sign in to save your reminder preferences and receive devotional notifications on this iPhone."
+              : "Enable devotional notifications on this iPhone so your daily and festival reminders can be delivered here."}
           </Text>
 
-          <View style={styles.deviceStatusBox}>
-            <Text style={styles.deviceStatusLabel}>Status</Text>
-            <Text style={styles.deviceStatusValue}>
-              {pushRegistrationStatus === "registered"
-                ? "Registered"
-                : pushRegistrationStatus === "denied"
-                  ? "Permission denied"
-                  : pushRegistrationStatus === "missing_project_id"
-                    ? "Expo project ID missing"
-                    : pushRegistrationStatus === "unavailable"
-                      ? "Physical device required"
-                      : pushRegistrationStatus === "error"
-                        ? "Registration failed"
-                        : "Not registered"}
-            </Text>
-            {pushRegistrationMessage ? (
-              <Text style={styles.deviceStatusMessage}>{pushRegistrationMessage}</Text>
-            ) : null}
-          </View>
-
-          <View style={styles.deviceButtonRow}>
-            <Pressable
-              style={[styles.actionButton, styles.primaryActionButton]}
-              onPress={async () => {
-                const result = await registerDeviceForNotifications();
-                setActivityRefreshNonce((current) => current + 1);
-                Alert.alert("Notifications", result.message);
-              }}
-            >
-              <Text style={styles.primaryActionButtonText}>Enable on This iPhone</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.actionButton, styles.secondaryActionButton]}
-              onPress={async () => {
-                const result = await scheduleLocalNotificationPreview(reminder?.prayerId ?? null);
-                setActivityRefreshNonce((current) => current + 1);
-                if (result.error) {
-                  Alert.alert("Notification Preview", result.error);
-                  return;
-                }
-                if (result.notice) {
-                  Alert.alert("Notification Preview", result.notice);
-                }
-              }}
-            >
-              <Text style={styles.secondaryActionButtonText}>Preview Local Alert</Text>
-            </Pressable>
-          </View>
-        </SectionCard>
-
-        {user?.id && !user.isGuest ? (
-          <SectionCard>
-            <Text style={styles.sectionTitle}>Recent Notification Activity</Text>
-            {notificationActivity.length > 0 ? (
-              <View style={styles.activityList}>
-                {notificationActivity.map((item) => (
-                  <View key={item.id} style={styles.activityRow}>
-                    <View style={styles.activityIconWrap}>
-                      <Ionicons
-                        name={
-                          item.status === "sent"
-                            ? "checkmark"
-                            : item.status === "failed"
-                              ? "alert"
-                              : "time-outline"
-                        }
-                        size={14}
-                        color="#FFF5E4"
-                      />
-                    </View>
-                    <View style={styles.activityTextWrap}>
-                      <Text style={styles.activityTitle}>{item.message}</Text>
-                      <Text style={styles.activityMeta}>
-                        {item.prayerSlug ? `${item.prayerSlug} · ` : ""}
-                        {item.sentAt
-                          ? new Date(item.sentAt).toLocaleString()
-                          : new Date(item.createdAt).toLocaleString()}
-                      </Text>
-                    </View>
-                    <Text style={styles.activityStatus}>{item.status}</Text>
-                  </View>
-                ))}
+          {user?.isGuest ? (
+            <View style={styles.deviceButtonRow}>
+              <Pressable
+                style={[styles.actionButton, styles.primaryActionButton]}
+                onPress={() => void logout()}
+              >
+                <Text style={styles.primaryActionButtonText}>{tr("common.signInToContinue")}</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <>
+              <View style={styles.deviceStatusBox}>
+                <Text style={styles.deviceStatusLabel}>Status</Text>
+                <Text style={styles.deviceStatusValue}>
+                  {deviceIsRegistered
+                    ? "Enabled"
+                    : pushRegistrationStatus === "denied"
+                      ? "Permission needed"
+                    : pushRegistrationStatus === "missing_project_id"
+                        ? "Not available yet"
+                        : pushRegistrationStatus === "unavailable"
+                          ? "Requires this iPhone"
+                          : pushRegistrationStatus === "error"
+                            ? "Could not enable"
+                            : "Not enabled"}
+                </Text>
+                {pushRegistrationMessage ? (
+                  <Text style={styles.deviceStatusMessage}>{pushRegistrationMessage}</Text>
+                ) : null}
               </View>
-            ) : (
-              <Text style={styles.settingBody}>
-                Notification previews and future push sends will appear here once activity is logged for this account.
-              </Text>
-            )}
-          </SectionCard>
-        ) : null}
+
+              <View style={styles.deviceButtonRow}>
+                <Pressable
+                  style={[styles.actionButton, styles.primaryActionButton]}
+                  onPress={async () => {
+                    const result = await registerDeviceForNotifications();
+                    Alert.alert("Notifications", result.message);
+                  }}
+                >
+                  <Text style={styles.primaryActionButtonText}>Enable on This iPhone</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
+        </SectionCard>
 
         {notificationsEnabled && reminder ? (
           <Pressable
@@ -354,6 +346,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#F0E0C8",
   },
+  settingRowDisabled: {
+    opacity: 0.55,
+  },
   settingRowLast: {
     paddingBottom: 0,
     marginBottom: 0,
@@ -373,6 +368,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 6,
     lineHeight: 18,
+  },
+  settingNotice: {
+    color: AppColors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 14,
   },
   deviceStatusBox: {
     marginTop: 14,
@@ -404,6 +405,55 @@ const styles = StyleSheet.create({
   deviceButtonRow: {
     marginTop: 14,
     gap: 10,
+  },
+  queueHeaderRow: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 12,
+    marginBottom: 6,
+  },
+  devSubsection: {
+    marginTop: 18,
+    paddingTop: 18,
+    borderTopWidth: 1,
+    borderTopColor: "#F0E0C8",
+  },
+  devSubsectionTitle: {
+    color: AppColors.textPrimary,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  queueActionWrap: {
+    alignItems: "stretch",
+    gap: 8,
+    width: "100%",
+  },
+  queueNowButton: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(201,168,124,0.32)",
+    backgroundColor: "rgba(255,140,66,0.12)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  queueNowButtonText: {
+    color: AppColors.accent,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  runDispatchButton: {
+    borderRadius: 14,
+    backgroundColor: AppColors.maroon,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  runDispatchButtonText: {
+    color: "#FFF5E4",
+    fontSize: 12,
+    fontWeight: "700",
   },
   activityList: {
     marginTop: 14,
@@ -518,5 +568,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: "600",
+  },
+  optionButtonRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+    flexWrap: "wrap",
+  },
+  optionButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#E7C9A3",
+    backgroundColor: "#FFF7EE",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  optionButtonActive: {
+    backgroundColor: AppColors.accent,
+    borderColor: AppColors.accent,
+  },
+  optionButtonText: {
+    color: AppColors.textPrimary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  optionButtonTextActive: {
+    color: "#FFF8ED",
   },
 });

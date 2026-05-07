@@ -5,27 +5,37 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import * as Linking from "expo-linking";
+import { AppState } from "react-native";
+import type { CustomerInfo } from "react-native-purchases";
 import {
+  consumeGoogleAuthCallback,
   getInitialSession,
-  loginWithGoogle as unsupportedGoogleLogin,
+  isGoogleAuthCallbackUrl,
+  loginWithGoogle as signInWithGoogleOAuth,
   signInWithEmail,
   signOutFromSupabase,
   signUpWithEmail,
   subscribeToAuthChanges,
+  waitForSupabaseSession,
   type AuthActionResult,
 } from "../lib/supabase/auth";
 import { registerForPushNotificationsAsync, type NotificationRegistrationResult } from "../lib/notifications";
 import { isSupabaseConfigured } from "../lib/supabase/client";
 import {
   addFavoritePrayer,
+  fetchRegisteredUserDevice,
   loadUserState,
   logNotificationEvent,
   removeFavoritePrayer,
   saveLanguagePreferences,
   saveProfileDetails,
   saveReminderPreferences,
+  saveSadhanaPreferences,
+  saveFamilyLearningPreferences,
   saveUserDevice,
   saveUserEntitlement,
 } from "../lib/supabase/profile";
@@ -58,23 +68,45 @@ type AppContextValue = {
   hasFamilyAccess: boolean;
   dailyReminderEnabled: boolean;
   festivalReminderEnabled: boolean;
+  festivalPreparationReminderEnabled: boolean;
+  festivalPreparationLeadDays: number;
+  dailySadhanaEnabled: boolean;
+  dailySadhanaDurationMinutes: number;
+  dailySadhanaFocus: string;
+  dailySadhanaPreferredDeity: string | null;
+  familyLearningEnabled: boolean;
+  familyLearningAgeGroup: string;
+  familyLearningMode: string;
+  familyLearningPreferredDeity: string | null;
   reminderTime: string;
   favoritePrayerIds: string[];
   pushRegistrationStatus: NotificationRegistrationResult["status"] | "idle";
   pushRegistrationMessage: string;
   expoPushToken: string | null;
+  isDeviceRegistered: boolean;
   authReady: boolean;
   authBusy: boolean;
   isSupabaseConnected: boolean;
+  refreshPremiumEntitlement: (customerInfo?: CustomerInfo | null) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<AuthActionResult>;
   signUp: (name: string, email: string, password: string) => Promise<AuthActionResult>;
   loginWithGoogle: () => Promise<AuthActionResult>;
   continueAsGuest: () => void;
-  updateProfile: (updates: Partial<MobileUser>) => void;
+  updateProfile: (updates: Partial<MobileUser>) => Promise<AuthActionResult>;
   setAppLanguage: (language: string) => void;
   setPrayerSourceLanguage: (language: string) => void;
   setDailyReminderEnabled: (enabled: boolean) => void;
   setFestivalReminderEnabled: (enabled: boolean) => void;
+  setFestivalPreparationReminderEnabled: (enabled: boolean) => void;
+  setFestivalPreparationLeadDays: (days: number) => void;
+  setDailySadhanaEnabled: (enabled: boolean) => void;
+  setDailySadhanaDurationMinutes: (minutes: number) => void;
+  setDailySadhanaFocus: (focus: string) => void;
+  setDailySadhanaPreferredDeity: (deity: string | null) => void;
+  setFamilyLearningEnabled: (enabled: boolean) => void;
+  setFamilyLearningAgeGroup: (ageGroup: string) => void;
+  setFamilyLearningMode: (mode: string) => void;
+  setFamilyLearningPreferredDeity: (deity: string | null) => void;
   toggleFavoritePrayer: (prayerId: string) => void;
   isFavoritePrayer: (prayerId: string) => boolean;
   registerDeviceForNotifications: () => Promise<NotificationRegistrationResult>;
@@ -85,6 +117,25 @@ type AppContextValue = {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 const defaultFavoritePrayerIds = ["hanuman-chalisa", "ganesh-aarti"];
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim().length > 0) {
+      return message;
+    }
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Unknown error";
+  }
+}
 
 function hasActivePremiumEntitlement(
   subscriptionTier: SubscriptionTier,
@@ -107,6 +158,8 @@ function hasActivePremiumEntitlement(
 }
 
 export function AppProvider({ children }: PropsWithChildren) {
+  const lastHandledAuthUrlRef = useRef<string | null>(null);
+  const userRef = useRef<MobileUser | null>(null);
   const [user, setUser] = useState<MobileUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
@@ -118,12 +171,23 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [entitlementIsLifetime, setEntitlementIsLifetime] = useState(false);
   const [dailyReminderEnabled, setDailyReminderEnabledState] = useState(true);
   const [festivalReminderEnabled, setFestivalReminderEnabledState] = useState(true);
+  const [festivalPreparationReminderEnabled, setFestivalPreparationReminderEnabledState] = useState(false);
+  const [festivalPreparationLeadDays, setFestivalPreparationLeadDaysState] = useState(1);
+  const [dailySadhanaEnabled, setDailySadhanaEnabledState] = useState(false);
+  const [dailySadhanaDurationMinutes, setDailySadhanaDurationMinutesState] = useState(15);
+  const [dailySadhanaFocus, setDailySadhanaFocusState] = useState("balanced");
+  const [dailySadhanaPreferredDeity, setDailySadhanaPreferredDeityState] = useState<string | null>(null);
+  const [familyLearningEnabled, setFamilyLearningEnabledState] = useState(false);
+  const [familyLearningAgeGroup, setFamilyLearningAgeGroupState] = useState("family");
+  const [familyLearningMode, setFamilyLearningModeState] = useState("meaning");
+  const [familyLearningPreferredDeity, setFamilyLearningPreferredDeityState] = useState<string | null>(null);
   const [reminderTime] = useState("6:30 AM");
   const [favoritePrayerIds, setFavoritePrayerIds] = useState<string[]>(defaultFavoritePrayerIds);
   const [pushRegistrationStatus, setPushRegistrationStatus] =
     useState<AppContextValue["pushRegistrationStatus"]>("idle");
   const [pushRegistrationMessage, setPushRegistrationMessage] = useState("");
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+  const [isDeviceRegistered, setIsDeviceRegistered] = useState(false);
 
   const hydrateSessionUser = useCallback(async (authUser: { id: string } | null) => {
     if (!authUser || !isSupabaseConfigured) {
@@ -140,6 +204,16 @@ export function AppProvider({ children }: PropsWithChildren) {
     setEntitlementIsLifetime(loaded.entitlementIsLifetime);
     setDailyReminderEnabledState(loaded.dailyReminderEnabled);
     setFestivalReminderEnabledState(loaded.festivalReminderEnabled);
+    setFestivalPreparationReminderEnabledState(loaded.festivalPreparationReminderEnabled);
+    setFestivalPreparationLeadDaysState(loaded.festivalPreparationLeadDays);
+    setDailySadhanaEnabledState(loaded.dailySadhanaEnabled);
+    setDailySadhanaDurationMinutesState(loaded.dailySadhanaDurationMinutes);
+    setDailySadhanaFocusState(loaded.dailySadhanaFocus);
+    setDailySadhanaPreferredDeityState(loaded.dailySadhanaPreferredDeity);
+    setFamilyLearningEnabledState(loaded.familyLearningEnabled);
+    setFamilyLearningAgeGroupState(loaded.familyLearningAgeGroup);
+    setFamilyLearningModeState(loaded.familyLearningMode);
+    setFamilyLearningPreferredDeityState(loaded.familyLearningPreferredDeity);
     setFavoritePrayerIds(
       loaded.favoritePrayerIds.length > 0 ? loaded.favoritePrayerIds : defaultFavoritePrayerIds
     );
@@ -155,8 +229,19 @@ export function AppProvider({ children }: PropsWithChildren) {
     setEntitlementIsLifetime(false);
     setDailyReminderEnabledState(true);
     setFestivalReminderEnabledState(true);
+    setFestivalPreparationReminderEnabledState(false);
+    setFestivalPreparationLeadDaysState(1);
+    setDailySadhanaEnabledState(false);
+    setDailySadhanaDurationMinutesState(15);
+    setDailySadhanaFocusState("balanced");
+    setDailySadhanaPreferredDeityState(null);
+    setFamilyLearningEnabledState(false);
+    setFamilyLearningAgeGroupState("family");
+    setFamilyLearningModeState("meaning");
+    setFamilyLearningPreferredDeityState(null);
     setFavoritePrayerIds(defaultFavoritePrayerIds);
     setExpoPushToken(null);
+    setIsDeviceRegistered(false);
     setPushRegistrationStatus("idle");
     setPushRegistrationMessage("");
   }, []);
@@ -186,7 +271,7 @@ export function AppProvider({ children }: PropsWithChildren) {
           provider: "revenuecat",
           providerCustomerId: userId,
           providerSubscriptionId: null,
-          productCode: next.subscriptionTier === "free" ? null : next.subscriptionTier,
+          productCode: next.primaryProductCode,
         });
       } catch (error) {
         console.warn("Failed to persist RevenueCat entitlement", error);
@@ -195,34 +280,144 @@ export function AppProvider({ children }: PropsWithChildren) {
     []
   );
 
+  const refreshPremiumEntitlement = useCallback(async (nextCustomerInfo?: CustomerInfo | null) => {
+    if (!user?.id || user.isGuest) {
+      applyRevenueCatEntitlement({
+        subscriptionTier: "free",
+        entitlementStatus: "inactive",
+        entitlementValidUntil: null,
+        entitlementIsLifetime: false,
+        hasMappedEntitlement: false,
+        primaryProductCode: null,
+      });
+      return false;
+    }
+
+    const customerInfo = nextCustomerInfo ?? (await fetchRevenueCatCustomerInfo());
+    const mappedEntitlement = customerInfo
+      ? getRevenueCatEntitlementState(customerInfo)
+      : {
+          subscriptionTier: "free" as const,
+          entitlementStatus: "inactive" as const,
+          entitlementValidUntil: null,
+          entitlementIsLifetime: false,
+          hasMappedEntitlement: false,
+          primaryProductCode: null,
+        };
+
+    applyRevenueCatEntitlement(mappedEntitlement);
+    await persistRevenueCatEntitlement(user.id, mappedEntitlement);
+    return hasActivePremiumEntitlement(
+      mappedEntitlement.subscriptionTier,
+      mappedEntitlement.entitlementStatus,
+      mappedEntitlement.entitlementValidUntil,
+      mappedEntitlement.entitlementIsLifetime
+    );
+  }, [applyRevenueCatEntitlement, persistRevenueCatEntitlement, user]);
+
+  const reconcileGoogleAuthSession = useCallback(async (incomingUrl?: string | null) => {
+    if (!isSupabaseConfigured) {
+      setAuthBusy(false);
+      setAuthReady(true);
+      return;
+    }
+
+    try {
+      const existingSession = await getInitialSession();
+      if (existingSession?.user) {
+        await hydrateSessionUser(existingSession.user);
+        return;
+      }
+
+      const callbackUrl =
+        incomingUrl && isGoogleAuthCallbackUrl(incomingUrl)
+          ? incomingUrl
+          : await Linking.getInitialURL();
+      const hasCallbackUrl = Boolean(callbackUrl && isGoogleAuthCallbackUrl(callbackUrl));
+
+      const hasFreshCallbackUrl =
+        Boolean(callbackUrl && isGoogleAuthCallbackUrl(callbackUrl)) &&
+        callbackUrl !== lastHandledAuthUrlRef.current;
+
+      if (hasFreshCallbackUrl && callbackUrl) {
+        lastHandledAuthUrlRef.current = callbackUrl;
+        const result = await consumeGoogleAuthCallback(callbackUrl);
+
+        if (result?.error) {
+          console.warn("Failed to complete Google auth callback", result.error);
+          return;
+        }
+      }
+
+      const sessionReady = await waitForSupabaseSession(
+        hasFreshCallbackUrl ? 10000 : hasCallbackUrl ? 3000 : 2000
+      );
+      if (!sessionReady) {
+        return;
+      }
+
+      const session = await getInitialSession();
+      if (session?.user) {
+        await hydrateSessionUser(session.user);
+      }
+    } catch (error) {
+      console.warn("Failed to reconcile Google auth session", error);
+    } finally {
+      setAuthBusy(false);
+      setAuthReady(true);
+    }
+  }, [hydrateSessionUser]);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   useEffect(() => {
     let active = true;
 
     async function bootstrap() {
       try {
-        if (!isSupabaseConfigured) {
-          return;
+        const initialUrl = await Linking.getInitialURL();
+        if (initialUrl && isGoogleAuthCallbackUrl(initialUrl)) {
+          setAuthBusy(true);
         }
 
-        const session = await getInitialSession();
-        if (active && session?.user) {
-          await hydrateSessionUser(session.user);
-        }
+        await reconcileGoogleAuthSession(initialUrl);
       } catch (error) {
         console.warn("Failed to bootstrap Supabase session", error);
       } finally {
         if (active) {
           setAuthReady(true);
+          setAuthBusy(false);
         }
       }
     }
 
     bootstrap();
 
+    const authCallbackSubscription = Linking.addEventListener("url", ({ url }) => {
+      if (!isGoogleAuthCallbackUrl(url)) {
+        return;
+      }
+
+      setAuthBusy(true);
+      void reconcileGoogleAuthSession(url);
+    });
+
+    const appStateSubscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active" || user) {
+        return;
+      }
+
+      void reconcileGoogleAuthSession();
+    });
+
     const subscription = subscribeToAuthChanges(async (_event, session) => {
       try {
         if (session?.user) {
           await hydrateSessionUser(session.user);
+        } else if (userRef.current?.isGuest) {
+          return;
         } else {
           resetLocalSessionState();
         }
@@ -230,14 +425,17 @@ export function AppProvider({ children }: PropsWithChildren) {
         console.warn("Failed to refresh auth session", error);
       } finally {
         setAuthReady(true);
+        setAuthBusy(false);
       }
     });
 
     return () => {
       active = false;
+      authCallbackSubscription.remove();
+      appStateSubscription.remove();
       subscription.data.subscription.unsubscribe();
     };
-  }, [hydrateSessionUser, resetLocalSessionState]);
+  }, [hydrateSessionUser, reconcileGoogleAuthSession, resetLocalSessionState]);
 
   useEffect(() => {
     let active = true;
@@ -283,6 +481,40 @@ export function AppProvider({ children }: PropsWithChildren) {
     };
   }, [applyRevenueCatEntitlement, persistRevenueCatEntitlement, user?.id, user?.isGuest]);
 
+  useEffect(() => {
+    let active = true;
+
+    async function hydrateRegisteredDevice() {
+      if (!user?.id || user.isGuest || !isSupabaseConfigured) {
+        if (active) {
+          setIsDeviceRegistered(false);
+        }
+        return;
+      }
+
+      try {
+        const registration = await fetchRegisteredUserDevice(user.id);
+        if (!active) return;
+        setIsDeviceRegistered(registration.isRegistered);
+        if (registration.expoPushToken) {
+          setExpoPushToken(registration.expoPushToken);
+        }
+        if (registration.isRegistered) {
+          setPushRegistrationStatus("registered");
+          setPushRegistrationMessage("Device notifications are enabled for this app.");
+        }
+      } catch (error) {
+        console.warn("Failed to hydrate registered device state", error);
+      }
+    }
+
+    void hydrateRegisteredDevice();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, user?.isGuest]);
+
   const signIn = useCallback(async (email: string, password: string) => {
     setAuthBusy(true);
     try {
@@ -304,10 +536,44 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
-    return unsupportedGoogleLogin();
+    setAuthBusy(true);
+    try {
+      const result = await signInWithGoogleOAuth();
+      if (result.error || result.notice) {
+        setAuthBusy(false);
+      }
+      return result;
+    } catch (error) {
+      setAuthBusy(false);
+      throw error;
+    }
   }, []);
 
   const continueAsGuest = useCallback(() => {
+    lastHandledAuthUrlRef.current = null;
+    setAuthBusy(false);
+    setAuthReady(true);
+    setSubscriptionTier("free");
+    setEntitlementStatus("inactive");
+    setEntitlementValidUntil(null);
+    setEntitlementIsLifetime(false);
+    setDailyReminderEnabledState(true);
+    setFestivalReminderEnabledState(true);
+    setFestivalPreparationReminderEnabledState(false);
+    setFestivalPreparationLeadDaysState(1);
+    setDailySadhanaEnabledState(false);
+    setDailySadhanaDurationMinutesState(15);
+    setDailySadhanaFocusState("balanced");
+    setDailySadhanaPreferredDeityState(null);
+    setFamilyLearningEnabledState(false);
+    setFamilyLearningAgeGroupState("family");
+    setFamilyLearningModeState("meaning");
+    setFamilyLearningPreferredDeityState(null);
+    setFavoritePrayerIds(defaultFavoritePrayerIds);
+    setExpoPushToken(null);
+    setIsDeviceRegistered(false);
+    setPushRegistrationStatus("idle");
+    setPushRegistrationMessage("");
     setUser({
       name: "Guest Devotee",
       email: "",
@@ -316,21 +582,44 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, []);
 
   const updateProfile = useCallback(
-    (updates: Partial<MobileUser>) => {
-      setUser((current) => {
-        if (!current) return current;
-        return { ...current, ...updates };
-      });
+    async (updates: Partial<MobileUser>) => {
+      if (!user) {
+        return { error: "No active profile to update." };
+      }
 
-      if (user?.id && !user.isGuest) {
-        void saveProfileDetails(user.id, {
+      if (user.isGuest || !user.id) {
+        setUser((current) => {
+          if (!current) return current;
+          return { ...current, ...updates };
+        });
+
+        return {
+          notice: "Saved for this guest session. Sign in to keep these details with your account.",
+        };
+      }
+
+      try {
+        await saveProfileDetails(user.id, {
           name: updates.name,
           email: updates.email,
           contactNumber: updates.contactNumber,
           photoUri: updates.photoUri,
-        }).catch((error) => {
-          console.warn("Failed to save profile details", error);
         });
+
+        setUser((current) => {
+          if (!current) return current;
+          return { ...current, ...updates };
+        });
+
+        return {
+          notice:
+            updates.email !== undefined && updates.email !== user.email
+              ? "Profile updated. If you changed your email, follow any confirmation steps sent to your inbox."
+              : "Profile updated.",
+        };
+      } catch (error) {
+        console.warn("Failed to save profile details", error);
+        return { error: getErrorMessage(error) };
       }
     },
     [user]
@@ -393,6 +682,136 @@ export function AppProvider({ children }: PropsWithChildren) {
     [user]
   );
 
+  const setFestivalPreparationReminderEnabled = useCallback(
+    (enabled: boolean) => {
+      setFestivalPreparationReminderEnabledState(enabled);
+      if (user?.id && !user.isGuest) {
+        void saveReminderPreferences(user.id, {
+          festivalPreparationReminderEnabled: enabled,
+        }).catch((error) => {
+          console.warn("Failed to save festival preparation reminder preference", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setFestivalPreparationLeadDays = useCallback(
+    (days: number) => {
+      const nextDays = Math.min(2, Math.max(1, Math.floor(days)));
+      setFestivalPreparationLeadDaysState(nextDays);
+      if (user?.id && !user.isGuest) {
+        void saveReminderPreferences(user.id, {
+          festivalPreparationLeadDays: nextDays,
+        }).catch((error) => {
+          console.warn("Failed to save festival preparation lead days", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setDailySadhanaEnabled = useCallback(
+    (enabled: boolean) => {
+      setDailySadhanaEnabledState(enabled);
+      if (user?.id && !user.isGuest) {
+        void saveSadhanaPreferences(user.id, { dailySadhanaEnabled: enabled }).catch((error) => {
+          console.warn("Failed to save daily sadhana enabled state", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setDailySadhanaDurationMinutes = useCallback(
+    (minutes: number) => {
+      const nextMinutes = Math.min(20, Math.max(10, Math.floor(minutes)));
+      setDailySadhanaDurationMinutesState(nextMinutes);
+      if (user?.id && !user.isGuest) {
+        void saveSadhanaPreferences(user.id, {
+          dailySadhanaDurationMinutes: nextMinutes,
+        }).catch((error) => {
+          console.warn("Failed to save daily sadhana duration", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setDailySadhanaFocus = useCallback(
+    (focus: string) => {
+      setDailySadhanaFocusState(focus);
+      if (user?.id && !user.isGuest) {
+        void saveSadhanaPreferences(user.id, { dailySadhanaFocus: focus }).catch((error) => {
+          console.warn("Failed to save daily sadhana focus", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setDailySadhanaPreferredDeity = useCallback(
+    (deity: string | null) => {
+      setDailySadhanaPreferredDeityState(deity);
+      if (user?.id && !user.isGuest) {
+        void saveSadhanaPreferences(user.id, { dailySadhanaPreferredDeity: deity }).catch((error) => {
+          console.warn("Failed to save daily sadhana preferred deity", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setFamilyLearningEnabled = useCallback(
+    (enabled: boolean) => {
+      setFamilyLearningEnabledState(enabled);
+      if (user?.id && !user.isGuest) {
+        void saveFamilyLearningPreferences(user.id, { familyLearningEnabled: enabled }).catch((error) => {
+          console.warn("Failed to save family learning enabled state", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setFamilyLearningAgeGroup = useCallback(
+    (ageGroup: string) => {
+      setFamilyLearningAgeGroupState(ageGroup);
+      if (user?.id && !user.isGuest) {
+        void saveFamilyLearningPreferences(user.id, { familyLearningAgeGroup: ageGroup }).catch((error) => {
+          console.warn("Failed to save family learning age group", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setFamilyLearningMode = useCallback(
+    (mode: string) => {
+      setFamilyLearningModeState(mode);
+      if (user?.id && !user.isGuest) {
+        void saveFamilyLearningPreferences(user.id, { familyLearningMode: mode }).catch((error) => {
+          console.warn("Failed to save family learning mode", error);
+        });
+      }
+    },
+    [user]
+  );
+
+  const setFamilyLearningPreferredDeity = useCallback(
+    (deity: string | null) => {
+      setFamilyLearningPreferredDeityState(deity);
+      if (user?.id && !user.isGuest) {
+        void saveFamilyLearningPreferences(user.id, {
+          familyLearningPreferredDeity: deity,
+        }).catch((error) => {
+          console.warn("Failed to save family learning preferred deity", error);
+        });
+      }
+    },
+    [user]
+  );
+
   const toggleFavoritePrayer = useCallback(
     (prayerId: string) => {
       const alreadyFavorite = favoritePrayerIds.includes(prayerId);
@@ -427,21 +846,30 @@ export function AppProvider({ children }: PropsWithChildren) {
       if (user?.id && !user.isGuest) {
         try {
           await saveUserDevice(user.id, result.token);
-          await logNotificationEvent({
-            userId: user.id,
-            status: "registered",
-            provider: "expo_device",
-            responsePayload: {
-              message: "Device notifications enabled on this iPhone.",
-            },
-          });
+          setIsDeviceRegistered(true);
+          setPushRegistrationStatus("registered");
+          setPushRegistrationMessage("Device notifications are enabled for this app.");
         } catch (error) {
           console.warn("Failed to save push token", error);
+          setIsDeviceRegistered(false);
           return {
             status: "error" as const,
-            message: "Notification token was created, but saving the device failed.",
+            message: `Notification token was created, but device registration failed. ${getErrorMessage(
+              error
+            )}`,
           };
         }
+
+        void logNotificationEvent({
+          userId: user.id,
+          status: "registered",
+          provider: "expo_device",
+          responsePayload: {
+            message: "Device notifications enabled on this iPhone.",
+          },
+        }).catch((error) => {
+          console.warn("Failed to log notification registration result", error);
+        });
       }
     } else if (user?.id && !user.isGuest) {
       void logNotificationEvent({
@@ -547,14 +975,26 @@ export function AppProvider({ children }: PropsWithChildren) {
       hasFamilyAccess,
       dailyReminderEnabled,
       festivalReminderEnabled,
+      festivalPreparationReminderEnabled,
+      festivalPreparationLeadDays,
+      dailySadhanaEnabled,
+      dailySadhanaDurationMinutes,
+      dailySadhanaFocus,
+      dailySadhanaPreferredDeity,
+      familyLearningEnabled,
+      familyLearningAgeGroup,
+      familyLearningMode,
+      familyLearningPreferredDeity,
       reminderTime,
       favoritePrayerIds,
       pushRegistrationStatus,
       pushRegistrationMessage,
       expoPushToken,
+      isDeviceRegistered,
       authReady,
       authBusy,
       isSupabaseConnected: isSupabaseConfigured,
+      refreshPremiumEntitlement,
       signIn,
       signUp,
       loginWithGoogle,
@@ -564,6 +1004,16 @@ export function AppProvider({ children }: PropsWithChildren) {
       setPrayerSourceLanguage,
       setDailyReminderEnabled,
       setFestivalReminderEnabled,
+      setFestivalPreparationReminderEnabled,
+      setFestivalPreparationLeadDays,
+      setDailySadhanaEnabled,
+      setDailySadhanaDurationMinutes,
+      setDailySadhanaFocus,
+      setDailySadhanaPreferredDeity,
+      setFamilyLearningEnabled,
+      setFamilyLearningAgeGroup,
+      setFamilyLearningMode,
+      setFamilyLearningPreferredDeity,
       toggleFavoritePrayer,
       isFavoritePrayer: (prayerId) => favoritePrayerIds.includes(prayerId),
       registerDeviceForNotifications,
@@ -576,11 +1026,21 @@ export function AppProvider({ children }: PropsWithChildren) {
       authReady,
       continueAsGuest,
       dailyReminderEnabled,
+      dailySadhanaDurationMinutes,
+      dailySadhanaEnabled,
+      dailySadhanaFocus,
+      dailySadhanaPreferredDeity,
+      familyLearningAgeGroup,
+      familyLearningEnabled,
+      familyLearningMode,
+      familyLearningPreferredDeity,
       entitlementStatus,
       entitlementValidUntil,
       expoPushToken,
       favoritePrayerIds,
       festivalReminderEnabled,
+      festivalPreparationLeadDays,
+      festivalPreparationReminderEnabled,
       hasFamilyAccess,
       hasPremiumAccess,
       loginWithGoogle,
@@ -588,12 +1048,23 @@ export function AppProvider({ children }: PropsWithChildren) {
       prayerSourceLanguage,
       pushRegistrationMessage,
       pushRegistrationStatus,
+      isDeviceRegistered,
       registerDeviceForNotifications,
       reminderTime,
       scheduleLocalNotificationPreview,
       setAppLanguage,
       setDailyReminderEnabled,
       setFestivalReminderEnabled,
+      setFestivalPreparationLeadDays,
+      setFestivalPreparationReminderEnabled,
+      setDailySadhanaDurationMinutes,
+      setDailySadhanaEnabled,
+      setDailySadhanaFocus,
+      setDailySadhanaPreferredDeity,
+      setFamilyLearningAgeGroup,
+      setFamilyLearningEnabled,
+      setFamilyLearningMode,
+      setFamilyLearningPreferredDeity,
       setPrayerSourceLanguage,
       signIn,
       signUp,

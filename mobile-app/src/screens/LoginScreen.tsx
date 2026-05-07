@@ -85,7 +85,6 @@ export function LoginScreen() {
   };
 
   const handleGuest = () => {
-    if (authBusy) return;
     continueAsGuest();
   };
 
@@ -112,7 +111,7 @@ export function LoginScreen() {
             {!isSupabaseConnected ? (
               <View style={styles.banner}>
                 <Text style={styles.bannerText}>
-                  Add your Supabase project URL and anon key to the Expo app env file to enable real authentication.
+                  Sign in is not available in this build yet, but you can still continue as a guest and explore the app.
                 </Text>
               </View>
             ) : null}
@@ -125,6 +124,7 @@ export function LoginScreen() {
                     key={item}
                     style={[styles.modeTab, active && styles.modeTabActive]}
                     onPress={() => setMode(item)}
+                    disabled={authBusy}
                   >
                     <Text style={[styles.modeText, active && styles.modeTextActive]}>
                       {item === "login" ? "Sign In" : "Sign Up"}
@@ -211,14 +211,22 @@ export function LoginScreen() {
               <View style={styles.divider} />
             </View>
 
-            <Pressable style={styles.secondaryButton} onPress={handleGoogleLogin}>
+            <Pressable
+              style={[styles.secondaryButton, authBusy && styles.secondaryButtonDisabled]}
+              onPress={handleGoogleLogin}
+              disabled={authBusy}
+            >
               <View style={styles.googleBadge}>
                 <Text style={styles.googleBadgeText}>G</Text>
               </View>
               <Text style={styles.secondaryButtonText}>Continue with Google</Text>
             </Pressable>
 
-            <Pressable style={styles.guestButton} onPress={handleGuest}>
+            <Pressable
+              style={[styles.guestButton, authBusy && styles.guestButtonDisabled]}
+              onPress={handleGuest}
+              disabled={authBusy}
+            >
               <Text style={styles.guestIcon}>🙏</Text>
               <Text style={styles.guestButtonText}>Continue as Guest</Text>
             </Pressable>
@@ -417,6 +425,9 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 12,
   },
+  secondaryButtonDisabled: {
+    opacity: 0.6,
+  },
   googleBadge: {
     width: 24,
     height: 24,
@@ -444,6 +455,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
     gap: 10,
+  },
+  guestButtonDisabled: {
+    opacity: 0.6,
   },
   guestIcon: {
     fontSize: 18,

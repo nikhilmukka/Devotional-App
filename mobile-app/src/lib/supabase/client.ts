@@ -4,6 +4,7 @@ import { createClient, processLock, type SupabaseClient } from "@supabase/supaba
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseHost = supabaseUrl?.split("://", 2)?.[1]?.split("/", 1)?.[0] ?? null;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
@@ -14,6 +15,7 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
+        flowType: "pkce",
         lock: processLock,
       },
     })
@@ -27,4 +29,16 @@ export function getSupabaseClient(): SupabaseClient {
   }
 
   return supabase;
+}
+
+export function getSupabaseUrl() {
+  return supabaseUrl ?? null;
+}
+
+export function getSupabaseAnonKey() {
+  return supabaseAnonKey ?? null;
+}
+
+export function getSupabaseHost() {
+  return supabaseHost;
 }
