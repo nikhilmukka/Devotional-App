@@ -36,7 +36,7 @@ This document is maintained by Claude Code and updated whenever the conversation
 
 Update the checkbox below as each phase completes.
 
-- [ ] **Phase 1** — Premium Infrastructure (entitlements, billing config, family plan model)
+- [x] **Phase 1** — Premium Infrastructure (entitlements, billing config, family plan model) ✅
 - [ ] **Phase 2** — Premium Feature Modules (meaning/learning mode, audio polish, family learning, sadhana v2)
 - [ ] **Phase 3** — Notification Engine (server-side resolver, push pipeline, copy templates)
 - [ ] **Phase 4** — Content Pipeline (sourcing strategy, prayers, festivals, audio, pooja guides)
@@ -50,8 +50,8 @@ Update the checkbox below as each phase completes.
 _Claude will update this section before asking for a context window reset._
 
 **Last session date:** 2026-05-13  
-**Last completed task:** Initial setup — committed all pending code, pushed to both repos, created BUILD_PLAN.md and HANDOVER.md  
-**Next task to start:** Phase 1.1 — Add `user_entitlements` table to Supabase schema
+**Last completed task:** Phase 1 complete — confirmed all billing infrastructure, entitlements, and premium screen already built. Created `supabase/family-members-setup.sql` (needs to be applied in Supabase dashboard).  
+**Next task to start:** Phase 2.1 — Meaning / Pronunciation / Learning Mode on Prayer Detail screen
 
 ---
 

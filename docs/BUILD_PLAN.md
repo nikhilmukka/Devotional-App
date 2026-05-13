@@ -41,23 +41,25 @@ BhaktiVerse is a guided Hindu devotional app for busy individuals and families.
 ### Phase 1 — Premium Infrastructure
 **Goal:** Replace placeholder premium flags with a real entitlement model. No real purchases yet, but the architecture must be production-ready.
 
+**Status: COMPLETE ✅**
+
 **Tasks:**
 
-- [ ] 1.1 Add `user_entitlements` table to Supabase schema
-  - Fields: `user_id`, `plan` (free / premium_individual / premium_family), `source` (revenuecat / manual), `valid_until`, `created_at`
-  - File: `supabase/schema.sql` + new migration file
-- [ ] 1.2 Replace premium placeholder flags in `AppContext.tsx` with entitlement reads from Supabase
+- [x] 1.1 Add `user_entitlements` table to Supabase — exists in `supabase/premium-setup.sql`, confirmed live in Supabase
+- [x] 1.2 AppContext wired to real entitlements — reads from Supabase on login, persists RevenueCat state back
   - File: `mobile-app/src/context/AppContext.tsx`
-- [ ] 1.3 Add billing config with final product identifiers
-  - Products: `premium_individual_monthly`, `premium_individual_yearly`, `premium_family_yearly`
+- [x] 1.3 Billing config with product identifiers — `bhaktiverse_premium_individual_monthly`, `_yearly`, `_family_yearly`
   - File: `mobile-app/src/lib/billing/config.ts`
-- [ ] 1.4 Update billing service abstraction to handle free / premium_individual / premium_family tiers
+- [x] 1.4 Billing service — full purchase, restore, entitlement mapping, customer info listener
   - File: `mobile-app/src/lib/billing/revenuecat.ts`
-- [ ] 1.5 Update Premium screen with proper plan selection UI, restore purchases button, and pricing display
+- [x] 1.5 Premium screen — plan selection, package loading from RevenueCat, restore purchases, purchase flow
   - File: `mobile-app/src/screens/PremiumScreen.tsx`
-- [ ] 1.6 Add family plan data model — shared entitlement recognition, multiple profiles groundwork
-  - New Supabase table: `family_members`
-- [ ] 1.7 Gate all premium features in mobile app using real entitlement state (not flags)
+- [x] 1.6 Family plan data model — `family_members` table created
+  - File: `supabase/family-members-setup.sql` — **apply this to Supabase dashboard**
+- [x] 1.7 `hasPremiumAccess` and `hasFamilyAccess` computed from live entitlement state (not flags)
+- [x] RevenueCat test SDK key configured in `mobile-app/.env`
+
+**One manual step required:** Apply `supabase/family-members-setup.sql` in your Supabase SQL editor.
 
 ---
 
