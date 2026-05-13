@@ -8,7 +8,13 @@ import { getTodayReminderCard, type ReminderCard } from '../data/reminders';
 import { getTodayAudioPrayer } from '../data/audioPrayers';
 import { AudioPrayerPlayer } from '../components/AudioPrayerPlayer';
 import { t } from '../i18n';
-import { fetchWebResolvedReminder } from '../lib/webContent';
+import {
+  fetchWebNotificationDispatchJobs,
+  fetchWebResolvedReminder,
+  queueWebNotificationJobs,
+  runWebNotificationDispatch,
+  type WebNotificationDispatchJob,
+} from '../lib/webContent';
 
 function ToggleRow({
   label,
@@ -72,8 +78,9 @@ function ToggleRow({
 
 export function RemindersScreen() {
   const navigate = useNavigate();
-  const { preferences, setPreference } = useApp();
+  const { user, preferences, setPreference } = useApp();
   const [reminder, setReminder] = useState<ReminderCard>(() => getTodayReminderCard());
+  const [dispatchJobs, setDispatchJobs] = useState<WebNotificationDispatchJob[]>([]);
   const todayAudioPrayer = getTodayAudioPrayer();
   const tr = (key: string) => t(preferences.language, key);
 
@@ -119,6 +126,51 @@ export function RemindersScreen() {
       active = false;
     };
   }, [preferences.language, preferences.reminderTime]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDispatchJobs() {
+      if (!user?.id || user.isGuest) {
+        if (active) {
+          setDispatchJobs([]);
+        }
+        return;
+      }
+
+      try {
+        const jobs = await fetchWebNotificationDispatchJobs(user.id);
+        if (active) {
+          setDispatchJobs(jobs);
+        }
+      } catch (error) {
+        console.warn('Unable to load queued reminder jobs', error);
+      }
+    }
+
+    void loadDispatchJobs();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, user?.isGuest]);
+
+  function getDispatchStatusLabel(status: string) {
+    switch (status) {
+      case 'processing':
+        return 'Processing';
+      case 'sent':
+        return 'Sent';
+      case 'failed':
+        return 'Failed';
+      case 'canceled':
+        return 'Canceled';
+      case 'skipped':
+        return 'Skipped';
+      default:
+        return 'Queued';
+    }
+  }
 
   return (
     <div className="absolute inset-0 flex flex-col" style={{ background: '#FFF5E4' }}>
@@ -418,6 +470,197 @@ export function RemindersScreen() {
             ))}
           </div>
         </motion.button>
+
+        {import.meta.env.DEV && user?.id && !user.isGuest ? (
+          <div
+            className="rounded-3xl p-5 mt-4"
+            style={{ background: '#FFFFFF', border: '1.5px solid #F0E0C8' }}
+          >
+            <div className="mb-4">
+              <h2
+                style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: '22px',
+                  fontWeight: 600,
+                  color: '#2D1B00',
+                }}
+              >
+                Developer Testing Tools
+              </h2>
+              <p
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '12px',
+                  color: '#9B8B7A',
+                  marginTop: '6px',
+                }}
+              >
+                These controls are for reminder QA only. They help us verify queueing and dispatch while we finish the backend flow.
+              </p>
+            </div>
+
+            <div
+              className="pt-4"
+              style={{
+                borderTop: '1px solid #F0E0C8',
+              }}
+            >
+            <div className="flex flex-col gap-3 mb-3">
+              <div>
+                <h2
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    color: '#2D1B00',
+                  }}
+                >
+                  Reminder Dispatch Queue
+                </h2>
+                <p
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '12px',
+                    color: '#9B8B7A',
+                    marginTop: '6px',
+                  }}
+                >
+                  Queue today's reminder jobs for your registered mobile devices using your current reminder settings.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const jobs = await queueWebNotificationJobs();
+                      setDispatchJobs(await fetchWebNotificationDispatchJobs(user.id!));
+                      window.alert(
+                        jobs.length > 0
+                          ? `Queued ${jobs.length} reminder job${jobs.length === 1 ? '' : 's'} for your registered device${jobs.length === 1 ? '' : 's'}.`
+                          : 'No reminder jobs were queued. Make sure notifications are enabled and a mobile device is registered.'
+                      );
+                    } catch (error) {
+                      window.alert(error instanceof Error ? error.message : 'Unable to queue reminder jobs right now.');
+                    }
+                  }}
+                  className="rounded-2xl px-4 py-2 shrink-0"
+                  style={{
+                    background: '#FFF5E4',
+                    border: '1px solid #F0E0C8',
+                    color: '#D96C2E',
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                  }}
+                >
+                  Queue Today&apos;s Reminder
+                </button>
+                {import.meta.env.DEV ? (
+                <button
+                  onClick={async () => {
+                    try {
+                      const result = await runWebNotificationDispatch();
+                      setDispatchJobs(await fetchWebNotificationDispatchJobs(user.id!));
+                      window.alert(
+                        result.claimed > 0
+                          ? `Claimed ${result.claimed} reminder job${result.claimed === 1 ? '' : 's'} and sent ${result.sent}.`
+                          : 'No queued reminder jobs were available to dispatch.'
+                      );
+                    } catch (error) {
+                      window.alert(error instanceof Error ? error.message : 'Unable to run reminder dispatch right now.');
+                    }
+                  }}
+                  className="rounded-2xl px-4 py-2 shrink-0"
+                  style={{
+                    background: '#7A1E1E',
+                    border: '1px solid #7A1E1E',
+                    color: '#FFF5E4',
+                    fontFamily: "'Poppins', sans-serif",
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                  }}
+                >
+                  Run Reminder Dispatch
+                </button>
+                ) : null}
+              </div>
+            </div>
+
+            {dispatchJobs.length > 0 ? (
+              <div className="flex flex-col gap-3 mt-4">
+                {dispatchJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="rounded-2xl p-4"
+                    style={{ background: '#FFF9F1', border: '1px solid #F0E0C8' }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p
+                          style={{
+                            fontFamily: "'Poppins', sans-serif",
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: '#2D1B00',
+                          }}
+                        >
+                          {job.prayerSlug || 'Queued reminder'}
+                        </p>
+                        <p
+                          style={{
+                            fontFamily: "'Poppins', sans-serif",
+                            fontSize: '11px',
+                            color: '#9B8B7A',
+                            marginTop: '4px',
+                          }}
+                        >
+                          {(job.reminderType === 'festival' ? 'Festival' : 'Daily')} · Scheduled{' '}
+                          {new Date(job.scheduledForLocal).toLocaleString()}
+                        </p>
+                        <p
+                          style={{
+                            fontFamily: "'Poppins', sans-serif",
+                            fontSize: '11px',
+                            color: '#9B8B7A',
+                            marginTop: '4px',
+                          }}
+                        >
+                          {job.lastError || `Provider: ${job.provider}`}
+                        </p>
+                      </div>
+                      <div
+                        className="rounded-full px-3 py-1"
+                        style={{
+                          background: '#FFE7D2',
+                          color: '#D96C2E',
+                          fontFamily: "'Poppins', sans-serif",
+                          fontSize: '11px',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {getDispatchStatusLabel(job.status)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '12px',
+                  color: '#9B8B7A',
+                  marginTop: '14px',
+                }}
+              >
+                No reminder jobs are queued yet for this account.
+              </p>
+            )}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <BottomNavBar />

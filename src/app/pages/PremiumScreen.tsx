@@ -1,6 +1,8 @@
-import { Crown, HeartHandshake, Sparkles, Volume2 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { Crown, HeartHandshake, RefreshCcw, Sparkles, Volume2 } from 'lucide-react';
 import { BottomNavBar } from '../components/BottomNavBar';
+import { useApp } from '../context/AppContext';
 import { t } from '../i18n';
 
 function getPlanLabel(tier: string, tr: (key: string) => string) {
@@ -9,9 +11,34 @@ function getPlanLabel(tier: string, tr: (key: string) => string) {
   return tr('premium.freePlan');
 }
 
+function getStatusLabel(status: string, tr: (key: string) => string) {
+  switch (status) {
+    case 'active':
+      return tr('premium.active');
+    case 'trial':
+      return tr('premium.trial');
+    case 'grace_period':
+      return tr('premium.gracePeriod');
+    default:
+      return tr('premium.inactive');
+  }
+}
+
 export function PremiumScreen() {
-  const { preferences, subscriptionTier, hasPremiumAccess } = useApp();
+  const navigate = useNavigate();
+  const {
+    user,
+    preferences,
+    subscriptionTier,
+    entitlementStatus,
+    entitlementValidUntil,
+    hasPremiumAccess,
+    authReady,
+    authBusy,
+    refreshSessionState,
+  } = useApp();
   const tr = (key: string) => t(preferences.language, key);
+  const [refreshing, setRefreshing] = useState(false);
 
   const features = [
     tr('premium.featureFestivalGuides'),
@@ -21,6 +48,15 @@ export function PremiumScreen() {
     tr('premium.featureNotebook'),
     tr('premium.featureVoice'),
   ];
+
+  async function handleRefreshPlan() {
+    setRefreshing(true);
+    try {
+      await refreshSessionState();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
     <div className="absolute inset-0 flex flex-col" style={{ background: '#FFF5E4' }}>
@@ -88,6 +124,7 @@ export function PremiumScreen() {
             >
               {tr('premium.currentPlan')}
             </p>
+
             <div className="flex items-center justify-between gap-3 mt-3 flex-wrap">
               <div
                 className="rounded-full px-4 py-2"
@@ -115,9 +152,10 @@ export function PremiumScreen() {
                   color: '#7B6A56',
                 }}
               >
-                {hasPremiumAccess ? tr('common.premium') : tr('premium.comingSoon')}
+                {tr('premium.status')}: {getStatusLabel(entitlementStatus, tr)}
               </span>
             </div>
+
             <p
               style={{
                 fontFamily: "'Poppins', sans-serif",
@@ -127,8 +165,46 @@ export function PremiumScreen() {
                 marginTop: '14px',
               }}
             >
-              {tr('premium.billingNote')}
+              {user?.isGuest
+                ? tr('premium.signInRequiredBody')
+                : hasPremiumAccess
+                  ? subscriptionTier === 'premium_family'
+                    ? tr('premium.familyBody')
+                    : tr('premium.premiumBody')
+                  : tr('premium.freeBody')}
             </p>
+
+            {entitlementValidUntil ? (
+              <p
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '12px',
+                  color: '#9B8B7A',
+                  marginTop: '10px',
+                }}
+              >
+                {tr('premium.validUntil')}: {new Date(entitlementValidUntil).toLocaleDateString()}
+              </p>
+            ) : null}
+
+            <div className="flex gap-3 mt-4 flex-wrap">
+              <button
+                onClick={() => (user?.isGuest ? navigate('/login') : void handleRefreshPlan())}
+                disabled={refreshing || !authReady || authBusy}
+                className="rounded-full px-4 py-3 flex items-center gap-2"
+                style={{
+                  background: '#7A1E1E',
+                  color: '#FFF5E4',
+                  opacity: refreshing || !authReady || authBusy ? 0.6 : 1,
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '13px',
+                  fontWeight: 700,
+                }}
+              >
+                <RefreshCcw size={16} strokeWidth={2} />
+                {user?.isGuest ? 'Sign In to Continue' : tr('premium.refreshCta')}
+              </button>
+            </div>
           </div>
 
           <div
@@ -276,6 +352,33 @@ export function PremiumScreen() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div
+            className="rounded-3xl p-5"
+            style={{ background: '#FFFFFF', border: '1.5px solid #F0E0C8' }}
+          >
+            <h2
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: '22px',
+                fontWeight: 600,
+                color: '#2D1B00',
+              }}
+            >
+              {tr('premium.availablePlans')}
+            </h2>
+            <p
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: '13px',
+                color: '#7B6A56',
+                lineHeight: 1.7,
+                marginTop: '10px',
+              }}
+            >
+              {tr('premium.webBillingBody')}
+            </p>
           </div>
         </div>
       </div>

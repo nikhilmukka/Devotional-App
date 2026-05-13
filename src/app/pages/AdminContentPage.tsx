@@ -12,7 +12,8 @@ type AdminTab =
   | "prayers"
   | "texts"
   | "audio"
-  | "reminders";
+  | "reminders"
+  | "diagnostics";
 
 type DeityRow = {
   id: string;
@@ -146,6 +147,71 @@ type ProfileRow = {
   is_admin?: boolean;
 };
 
+type AdminDiagnosticsSchedule = {
+  jobId: number;
+  jobName: string;
+  schedule: string;
+  active: boolean;
+  command: string;
+};
+
+type AdminDiagnosticsQueueSummary = {
+  total: number;
+  queued: number;
+  processing: number;
+  sent: number;
+  failed: number;
+  canceled: number;
+  skipped: number;
+  lastQueuedAt: string | null;
+  lastSentAt: string | null;
+  lastFailureAt: string | null;
+};
+
+type AdminDiagnosticsActivitySummary = {
+  total: number;
+  sent: number;
+  failed: number;
+  skipped: number;
+  canceled: number;
+  lastSentAt: string | null;
+  lastFailureAt: string | null;
+};
+
+type AdminDiagnosticsJob = {
+  id: string;
+  status: string;
+  provider: string;
+  regionCode: string;
+  scheduledForLocal: string;
+  attemptCount: number;
+  maxAttempts: number;
+  nextAttemptAt: string | null;
+  lastError: string | null;
+  prayerSlug: string | null;
+  updatedAt: string;
+  sentAt: string | null;
+  userEmail: string | null;
+};
+
+type AdminDiagnosticsActivity = {
+  id: string;
+  status: string;
+  provider: string;
+  createdAt: string;
+  sentAt: string | null;
+  prayerSlug: string | null;
+  userEmail: string | null;
+};
+
+type AdminReminderDiagnostics = {
+  schedules: AdminDiagnosticsSchedule[];
+  queueSummary: AdminDiagnosticsQueueSummary;
+  activitySummary: AdminDiagnosticsActivitySummary;
+  recentJobs: AdminDiagnosticsJob[];
+  recentActivity: AdminDiagnosticsActivity[];
+};
+
 const languageOptions = ["english", "hindi", "telugu", "kannada", "tamil", "marathi", "sanskrit"];
 const scriptOptions = ["native", "latin"];
 const accessTierOptions = [
@@ -162,6 +228,7 @@ const tabs: { key: AdminTab; label: string }[] = [
   { key: "texts", label: "Prayer Texts" },
   { key: "audio", label: "Audio" },
   { key: "reminders", label: "Reminders" },
+  { key: "diagnostics", label: "Diagnostics" },
 ];
 
 const weekdayOptions = [
@@ -241,6 +308,27 @@ function formatSeconds(seconds: number | null) {
   return `${mins} min`;
 }
 
+function formatAdminDateTime(value: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+function formatAdminStatusLabel(value: string | null) {
+  if (!value) return "—";
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatProviderLabel(value: string | null) {
+  if (!value) return "—";
+  if (value === "expo_dispatch") return "Expo Dispatch";
+  return formatAdminStatusLabel(value);
+}
+
 function isDuplicateHandledError(error: unknown) {
   return error instanceof Error && error.message === "__DUPLICATE_HANDLED__";
 }
@@ -254,6 +342,8 @@ export function AdminContentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [loadingDiagnostics, setLoadingDiagnostics] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<AdminReminderDiagnostics | null>(null);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -606,6 +696,24 @@ export function AdminContentPage() {
     }
   }, [session]);
 
+  const loadDiagnostics = useCallback(async () => {
+    if (!webSupabase || !session) return;
+
+    setLoadingDiagnostics(true);
+    try {
+      const { data, error } = await webSupabase.rpc("admin_get_reminder_diagnostics");
+      if (error) throw error;
+      setDiagnostics((data || null) as AdminReminderDiagnostics | null);
+    } catch (error) {
+      setNotice({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to load reminder diagnostics.",
+      });
+    } finally {
+      setLoadingDiagnostics(false);
+    }
+  }, [session]);
+
   const refreshProfile = useCallback(async (activeSession: Session | null) => {
     setLoadingProfile(true);
 
@@ -687,6 +795,12 @@ export function AdminContentPage() {
       void loadContent();
     }
   }, [loadContent, profile?.is_admin]);
+
+  useEffect(() => {
+    if (profile?.is_admin && activeTab === "diagnostics") {
+      void loadDiagnostics();
+    }
+  }, [activeTab, loadDiagnostics, profile?.is_admin]);
 
   const prayerMap = useMemo(
     () =>
@@ -3247,6 +3361,129 @@ export function AdminContentPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {activeTab === "diagnostics" ? (
+          <section className="admin-grid two">
+            <div className="admin-panel">
+              <h2>Reminder backend health</h2>
+              <div className="admin-helper">
+                This view helps us inspect reminder scheduling, queue health, and delivery activity without digging
+                into raw SQL every time. It is meant for operational QA and admin support, not for end users.
+              </div>
+              <div className="admin-actions-row">
+                <button className="admin-button secondary" type="button" onClick={() => void loadDiagnostics()}>
+                  {loadingDiagnostics ? "Refreshing..." : "Refresh Diagnostics"}
+                </button>
+              </div>
+              {loadingDiagnostics ? <div className="admin-loading">Loading reminder diagnostics…</div> : null}
+              {!loadingDiagnostics && diagnostics ? (
+                <div className="admin-stat-grid">
+                  <div className="admin-stat-card">
+                    <span>Queued Jobs</span>
+                    <strong>{diagnostics.queueSummary?.queued ?? 0}</strong>
+                  </div>
+                  <div className="admin-stat-card">
+                    <span>Processing Jobs</span>
+                    <strong>{diagnostics.queueSummary?.processing ?? 0}</strong>
+                  </div>
+                  <div className="admin-stat-card">
+                    <span>Sent Jobs</span>
+                    <strong>{diagnostics.queueSummary?.sent ?? 0}</strong>
+                  </div>
+                  <div className="admin-stat-card">
+                    <span>Failed Jobs</span>
+                    <strong>{diagnostics.queueSummary?.failed ?? 0}</strong>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="admin-panel">
+              <h2>Scheduler status</h2>
+              <div className="admin-record-list">
+                {(diagnostics?.schedules || []).length ? (
+                  diagnostics?.schedules.map((schedule) => (
+                    <div key={schedule.jobId} className="admin-record">
+                      <div>
+                        <strong>{schedule.jobName}</strong>
+                        <span>Schedule: {schedule.schedule}</span>
+                        <span>Command: {schedule.command}</span>
+                      </div>
+                      <div className="admin-record-actions">
+                        <span>{schedule.active ? "Active" : "Paused"}</span>
+                        <span>Job #{schedule.jobId}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="admin-helper">
+                    No reminder scheduler rows are visible yet. If you just enabled them, refresh once more after a
+                    few seconds.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="admin-panel">
+              <h2>Latest dispatch jobs</h2>
+              <div className="admin-record-list">
+                {(diagnostics?.recentJobs || []).length ? (
+                  diagnostics?.recentJobs.map((job) => (
+                    <div key={job.id} className="admin-record">
+                      <div>
+                        <strong>{job.prayerSlug || "Unknown prayer"}</strong>
+                        <span>
+                          Status: {formatAdminStatusLabel(job.status)} · Provider: {formatProviderLabel(job.provider)} · Region: {job.regionCode}
+                        </span>
+                        <span>
+                          Scheduled: {formatAdminDateTime(job.scheduledForLocal)} · Updated:{" "}
+                          {formatAdminDateTime(job.updatedAt)}
+                        </span>
+                        {job.lastError ? <span>Last error: {job.lastError}</span> : null}
+                      </div>
+                      <div className="admin-record-actions">
+                        <span>
+                          Attempt {job.attemptCount}/{job.maxAttempts}
+                        </span>
+                        <span>{job.userEmail || "Unknown user"}</span>
+                        <span>Next retry: {formatAdminDateTime(job.nextAttemptAt)}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="admin-helper">No recent dispatch jobs yet.</div>
+                )}
+              </div>
+            </div>
+
+            <div className="admin-panel">
+              <h2>Latest reminder activity</h2>
+              <div className="admin-record-list">
+                {(diagnostics?.recentActivity || []).length ? (
+                  diagnostics?.recentActivity.map((activity) => (
+                    <div key={activity.id} className="admin-record">
+                      <div>
+                        <strong>{activity.prayerSlug || "Unknown prayer"}</strong>
+                        <span>
+                          Status: {formatAdminStatusLabel(activity.status)} · Provider: {formatProviderLabel(activity.provider)}
+                        </span>
+                        <span>
+                          Logged: {formatAdminDateTime(activity.createdAt)} · Sent:{" "}
+                          {formatAdminDateTime(activity.sentAt)}
+                        </span>
+                      </div>
+                      <div className="admin-record-actions">
+                        <span>{activity.userEmail || "Unknown user"}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="admin-helper">No recent reminder activity rows yet.</div>
+                )}
               </div>
             </div>
           </section>

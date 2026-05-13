@@ -152,6 +152,61 @@ export type WebFestivalGuide = {
   isPremium: boolean;
 };
 
+export type WebNotificationDispatchJob = {
+  id: string;
+  status: string;
+  provider: string;
+  scheduledForLocal: string;
+  createdAt: string;
+  sentAt: string | null;
+  lastError: string | null;
+  prayerSlug: string | null;
+  reminderType: 'daily' | 'festival' | null;
+};
+
+export type WebNotificationDispatchRunResult = {
+  ok: boolean;
+  claimed: number;
+  sent: number;
+  failed: number;
+  retried?: number;
+  results: Array<{
+    jobId: string;
+    status: 'sent' | 'failed' | 'queued';
+    error?: string;
+  }>;
+};
+
+async function extractFunctionInvokeErrorMessage(error: unknown) {
+  if (typeof error === 'object' && error !== null && 'context' in error) {
+    const context = (error as { context?: unknown }).context;
+    if (context instanceof Response) {
+      const text = await context.text().catch(() => '');
+      if (text) {
+        try {
+          const parsed = JSON.parse(text) as { error?: string; details?: string; message?: string };
+          return parsed.details || parsed.error || parsed.message || text;
+        } catch {
+          return text;
+        }
+      }
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message;
+    }
+  }
+
+  return 'Unable to invoke reminder dispatch.';
+}
+
 const deityIconAliases: Record<string, string> = {
   elephant: "🐘",
   moon: "🌙",
@@ -555,6 +610,107 @@ export async function fetchWebResolvedReminder(language: AppLanguage): Promise<W
     dayLabel: new Date(match.matched_date).toLocaleDateString('en-US', { weekday: 'long' }),
     duration: prayer.duration,
     festivalName,
+  };
+}
+
+export async function queueWebNotificationJobs(
+  targetDate?: string,
+  targetRegionCode = 'global'
+): Promise<WebNotificationDispatchJob[]> {
+  if (!isWebSupabaseConfigured || !webSupabase) {
+    return [];
+  }
+
+  const payload: Record<string, string> = {
+    target_region_code: targetRegionCode,
+  };
+
+  if (targetDate) {
+    payload.target_date = targetDate;
+  }
+
+  const { data, error } = await webSupabase.rpc('queue_my_due_notification_jobs', payload);
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    (data as any[] | null)?.map((row) => ({
+      id: row.job_id as string,
+      status: (row.job_status as string) || 'queued',
+      provider: 'expo_dispatch',
+      scheduledForLocal: row.scheduled_for_local as string,
+      createdAt: row.scheduled_for_local as string,
+      sentAt: null,
+      lastError: null,
+      prayerSlug: (row.prayer_slug as string | null) ?? null,
+      reminderType: (row.reminder_type as 'daily' | 'festival' | null) ?? null,
+    })) ?? []
+  );
+}
+
+export async function fetchWebNotificationDispatchJobs(
+  userId: string
+): Promise<WebNotificationDispatchJob[]> {
+  if (!isWebSupabaseConfigured || !webSupabase) {
+    return [];
+  }
+
+  const { data, error } = await webSupabase
+    .from('notification_dispatch_jobs')
+    .select(
+      'id, job_status, provider, scheduled_for_local, created_at, sent_at, last_error, reminder_rule:reminder_rules(rule_type), prayer:prayers(slug)'
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(8);
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    data?.map((row: any) => ({
+      id: row.id as string,
+      status: (row.job_status as string) || 'queued',
+      provider: (row.provider as string) || 'expo_dispatch',
+      scheduledForLocal: row.scheduled_for_local as string,
+      createdAt: row.created_at as string,
+      sentAt: (row.sent_at as string | null) ?? null,
+      lastError: (row.last_error as string | null) ?? null,
+      prayerSlug: (row.prayer?.slug as string | undefined) ?? null,
+      reminderType: (row.reminder_rule?.rule_type as 'daily' | 'festival' | undefined) ?? null,
+    })) ?? []
+  );
+}
+
+export async function runWebNotificationDispatch(
+  targetRegionCode = 'global',
+  maxJobs = 25
+): Promise<WebNotificationDispatchRunResult> {
+  if (!isWebSupabaseConfigured || !webSupabase) {
+    throw new Error('Supabase is not configured on web.');
+  }
+
+  const { data, error } = await webSupabase.functions.invoke('dispatch-reminder-notifications', {
+    body: {
+      regionCode: targetRegionCode,
+      maxJobs,
+    },
+  });
+
+  if (error) {
+    throw new Error(await extractFunctionInvokeErrorMessage(error));
+  }
+
+  return {
+    ok: Boolean((data as any)?.ok),
+    claimed: Number((data as any)?.claimed ?? 0),
+    sent: Number((data as any)?.sent ?? 0),
+    failed: Number((data as any)?.failed ?? 0),
+    retried: Number((data as any)?.retried ?? 0),
+    results: Array.isArray((data as any)?.results) ? (data as any).results : [],
   };
 }
 

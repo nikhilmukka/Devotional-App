@@ -7,7 +7,7 @@ import { t } from '../i18n';
 
 export function LoginScreen() {
   const navigate = useNavigate();
-  const { login, loginAsGuest, loginWithGoogle, preferences } = useApp();
+  const { login, signUp, loginAsGuest, loginWithGoogle, preferences, authBusy } = useApp();
   const tr = (key: string) => t(preferences.language, key);
 
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -16,14 +16,37 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ tone: 'error' | 'notice'; message: string } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      login(mode === 'signup' ? name || tr('home.devotee') : email.split('@')[0] || tr('home.devotee'), email);
+    setFeedback(null);
+    try {
+      const result =
+        mode === 'signup'
+          ? await signUp(name || tr('home.devotee'), email, password)
+          : await login(email, password);
+
+      if (!result.ok) {
+        setFeedback({
+          tone: 'error',
+          message: result.error || 'Unable to complete sign in right now.',
+        });
+        return;
+      }
+
+      if (result.notice) {
+        setFeedback({ tone: 'notice', message: result.notice });
+        if (mode === 'signup') {
+          return;
+        }
+      }
+
       navigate('/home', { replace: true });
-    }, 900);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGuest = () => {
@@ -31,12 +54,25 @@ export function LoginScreen() {
     navigate('/home', { replace: true });
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
-      loginWithGoogle(`Bhakti ${tr('home.devotee')}`, 'devotee@gmail.com');
-      navigate('/home', { replace: true });
-    }, 700);
+    setFeedback(null);
+    try {
+      const result = await loginWithGoogle();
+      if (!result.ok) {
+        setFeedback({
+          tone: 'error',
+          message: result.error || 'Google sign-in could not be started right now.',
+        });
+        return;
+      }
+
+      if (result.notice) {
+        setFeedback({ tone: 'notice', message: result.notice });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -140,6 +176,28 @@ export function LoginScreen() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {feedback ? (
+            <div
+              className="rounded-2xl px-4 py-3"
+              style={{
+                background: feedback.tone === 'error' ? '#FFF0ED' : '#FFF8EE',
+                border: `1.5px solid ${feedback.tone === 'error' ? '#F2B7A8' : '#E8D5B0'}`,
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: feedback.tone === 'error' ? '#9F2F1E' : '#7A5C3F',
+                  lineHeight: 1.6,
+                }}
+              >
+                {feedback.message}
+              </p>
+            </div>
+          ) : null}
+
           {mode === 'signup' && (
             <div className="relative">
               <User
@@ -240,7 +298,7 @@ export function LoginScreen() {
           <motion.button
             type="submit"
             whileTap={{ scale: 0.97 }}
-            disabled={loading}
+            disabled={loading || authBusy}
             className="w-full py-4 rounded-2xl mt-1 flex items-center justify-center gap-2 transition-opacity"
             style={{
               background: 'linear-gradient(135deg, #7A1E1E 0%, #FF8C42 100%)',
@@ -250,10 +308,10 @@ export function LoginScreen() {
               fontWeight: 600,
               letterSpacing: '0.5px',
               boxShadow: '0 6px 20px rgba(122,30,30,0.35)',
-              opacity: loading ? 0.75 : 1,
+              opacity: loading || authBusy ? 0.75 : 1,
             }}
           >
-            {loading ? (
+            {loading || authBusy ? (
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <motion.div
@@ -286,20 +344,22 @@ export function LoginScreen() {
           <div className="flex-1 h-px" style={{ background: '#E8D5B0' }} />
         </div>
 
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          type="button"
-          onClick={handleGoogleLogin}
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 mb-3"
-          style={{
-            background: '#FFFFFF',
-            border: '1.5px solid #E8D5B0',
-            color: '#2D1B00',
-            fontFamily: "'Poppins', sans-serif",
-            fontSize: '14px',
-            fontWeight: 600,
-          }}
-        >
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading || authBusy}
+            className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 mb-3"
+            style={{
+              background: '#FFFFFF',
+              border: '1.5px solid #E8D5B0',
+              color: '#2D1B00',
+              fontFamily: "'Poppins', sans-serif",
+              fontSize: '14px',
+              fontWeight: 600,
+              opacity: loading || authBusy ? 0.75 : 1,
+            }}
+          >
           <div
             className="flex items-center justify-center rounded-full shrink-0"
             style={{

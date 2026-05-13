@@ -58,9 +58,34 @@ create table if not exists public.user_preferences (
   notifications_enabled boolean not null default true,
   daily_reminder_enabled boolean not null default true,
   festival_reminder_enabled boolean not null default true,
+  festival_preparation_reminder_enabled boolean not null default false,
+  festival_preparation_lead_days integer not null default 1,
+  daily_sadhana_enabled boolean not null default false,
+  daily_sadhana_duration_minutes integer not null default 15,
+  daily_sadhana_focus text not null default 'balanced',
+  daily_sadhana_preferred_deity text,
+  family_learning_enabled boolean not null default false,
+  family_learning_age_group text not null default 'family',
+  family_learning_mode text not null default 'meaning',
+  family_learning_preferred_deity text,
   reminder_time_local time not null default '06:30',
   created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint user_preferences_festival_preparation_lead_days_check check (
+    festival_preparation_lead_days between 1 and 2
+  ),
+  constraint user_preferences_daily_sadhana_duration_check check (
+    daily_sadhana_duration_minutes between 10 and 20
+  ),
+  constraint user_preferences_daily_sadhana_focus_check check (
+    daily_sadhana_focus in ('balanced', 'calm', 'strength', 'prosperity', 'devotion')
+  ),
+  constraint user_preferences_family_learning_age_group_check check (
+    family_learning_age_group in ('4-6', '7-10', '11-14', 'family')
+  ),
+  constraint user_preferences_family_learning_mode_check check (
+    family_learning_mode in ('meaning', 'repeat', 'story', 'chant')
+  )
 );
 
 create table if not exists public.deities (
@@ -264,9 +289,37 @@ create table if not exists public.user_devices (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.notification_dispatch_jobs (
+  id uuid primary key default gen_random_uuid(),
+  dispatch_key text not null unique,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  device_id uuid references public.user_devices(id) on delete set null,
+  reminder_rule_id uuid references public.reminder_rules(id) on delete set null,
+  prayer_id uuid references public.prayers(id) on delete set null,
+  festival_calendar_id uuid references public.festival_calendar(id) on delete set null,
+  target_date date not null,
+  scheduled_for_local timestamp without time zone not null,
+  region_code text not null default 'global',
+  job_status text not null default 'queued',
+  provider text not null default 'expo_dispatch',
+  attempt_count integer not null default 0,
+  max_attempts integer not null default 3,
+  next_attempt_at timestamptz default timezone('utc', now()),
+  last_error text,
+  last_attempt_at timestamptz,
+  sent_at timestamptz,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint notification_dispatch_jobs_status_check check (
+    job_status in ('queued', 'processing', 'sent', 'failed', 'canceled', 'skipped')
+  )
+);
+
 create table if not exists public.notification_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
+  dispatch_job_id uuid references public.notification_dispatch_jobs(id) on delete set null,
   device_id uuid references public.user_devices(id) on delete set null,
   reminder_rule_id uuid references public.reminder_rules(id) on delete set null,
   prayer_id uuid references public.prayers(id) on delete set null,
@@ -278,6 +331,21 @@ create table if not exists public.notification_logs (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.user_sadhana_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  session_type text not null,
+  session_date date not null,
+  completed_at timestamptz not null default timezone('utc', now()),
+  metadata jsonb,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint user_sadhana_sessions_type_check check (
+    session_type in ('daily_sadhana', 'family_learning')
+  ),
+  constraint user_sadhana_sessions_unique_day unique (user_id, session_type, session_date)
+);
+
 create index if not exists festival_calendar_date_idx
   on public.festival_calendar (festival_date, region_code, is_active);
 
@@ -286,6 +354,15 @@ create index if not exists festival_pooja_guides_lookup_idx
 
 create index if not exists prayers_featured_idx
   on public.prayers (is_featured_home, is_active, sort_order);
+
+create index if not exists notification_dispatch_jobs_recent_user_idx
+  on public.notification_dispatch_jobs (user_id, created_at desc);
+
+create index if not exists notification_dispatch_jobs_status_idx
+  on public.notification_dispatch_jobs (job_status, target_date, region_code);
+
+create index if not exists user_sadhana_sessions_recent_idx
+  on public.user_sadhana_sessions (user_id, session_type, session_date desc);
 
 create index if not exists deities_active_idx
   on public.deities (is_active, sort_order);
@@ -358,11 +435,23 @@ create trigger set_user_devices_updated_at
 before update on public.user_devices
 for each row execute function public.set_updated_at();
 
+drop trigger if exists set_notification_dispatch_jobs_updated_at on public.notification_dispatch_jobs;
+create trigger set_notification_dispatch_jobs_updated_at
+before update on public.notification_dispatch_jobs
+for each row execute function public.set_updated_at();
+
+drop trigger if exists set_user_sadhana_sessions_updated_at on public.user_sadhana_sessions;
+create trigger set_user_sadhana_sessions_updated_at
+before update on public.user_sadhana_sessions
+for each row execute function public.set_updated_at();
+
 alter table public.profiles enable row level security;
 alter table public.user_preferences enable row level security;
 alter table public.user_favorites enable row level security;
 alter table public.user_devices enable row level security;
+alter table public.notification_dispatch_jobs enable row level security;
 alter table public.notification_logs enable row level security;
+alter table public.user_sadhana_sessions enable row level security;
 
 alter table public.deities enable row level security;
 alter table public.deity_translations enable row level security;
@@ -451,9 +540,127 @@ for update
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+drop policy if exists "sadhana_sessions_select_own" on public.user_sadhana_sessions;
+create policy "sadhana_sessions_select_own"
+on public.user_sadhana_sessions
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "sadhana_sessions_insert_own" on public.user_sadhana_sessions;
+create policy "sadhana_sessions_insert_own"
+on public.user_sadhana_sessions
+for insert
+with check (auth.uid() = user_id);
+
+drop policy if exists "sadhana_sessions_update_own" on public.user_sadhana_sessions;
+create policy "sadhana_sessions_update_own"
+on public.user_sadhana_sessions
+for update
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create or replace function public.register_my_device(
+  p_platform public.device_platform,
+  p_expo_push_token text,
+  p_device_name text default null,
+  p_app_version text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  existing_device_id uuid;
+begin
+  if current_user_id is null then
+    raise exception 'Authentication required to register a device';
+  end if;
+
+  if p_expo_push_token is null or length(trim(p_expo_push_token)) = 0 then
+    raise exception 'Expo push token is required';
+  end if;
+
+  select id
+  into existing_device_id
+  from public.user_devices
+  where expo_push_token = p_expo_push_token
+  limit 1;
+
+  if existing_device_id is not null then
+    update public.user_devices
+    set
+      user_id = current_user_id,
+      platform = p_platform,
+      device_name = p_device_name,
+      app_version = p_app_version,
+      is_active = true,
+      last_seen_at = timezone('utc', now()),
+      updated_at = timezone('utc', now())
+    where id = existing_device_id;
+
+    return existing_device_id;
+  end if;
+
+  select id
+  into existing_device_id
+  from public.user_devices
+  where user_id = current_user_id
+    and platform = p_platform
+    and is_active = true
+  order by updated_at desc nulls last, created_at desc
+  limit 1;
+
+  if existing_device_id is not null then
+    update public.user_devices
+    set
+      expo_push_token = p_expo_push_token,
+      device_name = p_device_name,
+      app_version = p_app_version,
+      is_active = true,
+      last_seen_at = timezone('utc', now()),
+      updated_at = timezone('utc', now())
+    where id = existing_device_id;
+
+    return existing_device_id;
+  end if;
+
+  insert into public.user_devices (
+    user_id,
+    platform,
+    expo_push_token,
+    device_name,
+    app_version,
+    is_active,
+    last_seen_at
+  )
+  values (
+    current_user_id,
+    p_platform,
+    p_expo_push_token,
+    p_device_name,
+    p_app_version,
+    true,
+    timezone('utc', now())
+  )
+  returning id into existing_device_id;
+
+  return existing_device_id;
+end;
+$$;
+
+grant execute on function public.register_my_device(public.device_platform, text, text, text) to authenticated;
+
 drop policy if exists "notification_logs_select_own" on public.notification_logs;
 create policy "notification_logs_select_own"
 on public.notification_logs
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "notification_dispatch_jobs_select_own" on public.notification_dispatch_jobs;
+create policy "notification_dispatch_jobs_select_own"
+on public.notification_dispatch_jobs
 for select
 using (auth.uid() = user_id);
 

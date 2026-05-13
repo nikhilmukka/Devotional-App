@@ -342,8 +342,10 @@
 }
 
 .admin-record span {
+  display: block;
   color: #8b7355;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .admin-record-actions {
@@ -351,6 +353,12 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
+  min-width: 132px;
+  text-align: right;
+}
+
+.admin-record-actions span {
+  overflow-wrap: anywhere;
 }
 
 .admin-record-actions .admin-button {

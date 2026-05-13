@@ -9,4 +9,8 @@
 - [Sprint 1 Implementation Checklist](./sprint-1-implementation-checklist.md)
 - [RevenueCat Setup Checklist](./revenuecat-setup-checklist.md)
 - [RevenueCat Dashboard Setup](./revenuecat-dashboard-setup.md)
+- [Notification Dispatch Runbook](./notification-dispatch-runbook.md)
+- [Production Readiness Checklist](./production-readiness-checklist.md)
+- [Current Tasks](./current-tasks.md)
+- [Release Cleanup Checklist](./release-cleanup-checklist.md)
 - [Conversation History](./conversation-history.md)

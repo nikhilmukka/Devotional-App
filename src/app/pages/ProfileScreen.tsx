@@ -212,18 +212,24 @@ export function ProfileScreen() {
     };
   }, [favorites, preferences.language]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login', { replace: true });
   };
 
-  const handleSaveProfile = () => {
-    updateProfile({
+  const handleSaveProfile = async () => {
+    const result = await updateProfile({
       name: form.name || tr('home.devotee'),
       email: form.email,
       phone: form.phone,
       photo: form.photo,
     });
+
+    if (!result.ok) {
+      console.warn('Failed to save profile on web', result.error);
+      return;
+    }
+
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
   };

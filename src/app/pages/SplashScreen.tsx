@@ -6,14 +6,18 @@ import { t } from '../i18n';
 
 export function SplashScreen() {
   const navigate = useNavigate();
-  const { user, preferences } = useApp();
+  const { user, preferences, authReady } = useApp();
 
   useEffect(() => {
+    if (!authReady) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       navigate(user ? '/home' : '/login', { replace: true });
     }, 2800);
     return () => clearTimeout(timer);
-  }, [navigate, user]);
+  }, [authReady, navigate, user]);
 
   return (
     <div
